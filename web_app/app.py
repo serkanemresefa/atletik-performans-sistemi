@@ -33,8 +33,20 @@ def login_required(f):
     return decorated_function
 
 def init_database():
+    # Veritabanı zaten varsa ve içinde kullanıcılar varsa işlem yapma
     if os.path.exists(DATABASE):
-        os.remove(DATABASE)
+        conn_check = get_db_connection()
+        try:
+            users_count = conn_check.execute('SELECT COUNT(id) FROM users').fetchone()[0]
+            conn_check.close()
+            if users_count > 0:
+                print("Database already exists and has users. Skipping initialization.")
+                return
+        except sqlite3.OperationalError:
+            # Henüz users tablosu yok, init devam etsin
+            pass
+        conn_check.close()
+
     conn = get_db_connection()
     with conn:
         conn.execute('''
@@ -59,8 +71,27 @@ def init_database():
         conn.execute('''
         CREATE TABLE IF NOT EXISTS players (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            position TEXT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            birth_date DATE,
+            nationality TEXT,
+            primary_position TEXT,
+            secondary_positions TEXT,
+            preferred_foot TEXT,
+            jersey_number INTEGER,
+            height_cm INTEGER,
+            weight_kg REAL,
+            previous_club TEXT,
+            club_history TEXT,
+            contract_start DATE,
+            contract_end DATE,
+            blood_type TEXT,
+            injury_history TEXT,
+            current_injury_status TEXT,
+            phone TEXT,
+            email TEXT,
+            emergency_contact TEXT,
+            notes TEXT,
             team_id INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (team_id) REFERENCES teams (id)
@@ -83,18 +114,23 @@ def init_database():
         ''')
         # Demo kullanıcı oluştur
         demo_password = hash_password('demo123')
-        cursor = conn.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
-                            ('demo', 'demo@example.com', demo_password))
-        demo_user_id = cursor.lastrowid
-        
-        cursor = conn.execute("INSERT INTO teams (name, user_id) VALUES (?, ?)", ('U17 Milli Takım', demo_user_id))
-        team_id = cursor.lastrowid
-        sample_players = [
-            ('Aleyna Can', 'Forward', team_id),
-            ('Berra Pekgöz', 'Midfielder', team_id),
-            ('Ecemnur Öztürk', 'Defender', team_id)
-        ]
-        conn.executemany("INSERT INTO players (name, position, team_id) VALUES (?, ?, ?)", sample_players)
+        try:
+            cursor = conn.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
+                                ('demo', 'demo@example.com', demo_password))
+            demo_user_id = cursor.lastrowid
+            
+            cursor = conn.execute("INSERT INTO teams (name, user_id) VALUES (?, ?)", ('U17 Milli Takım', demo_user_id))
+            team_id = cursor.lastrowid
+            sample_players = [
+                ('Aleyna', 'Can', '2005-03-15', 'Türkiye', 'ST', 'RW,CAM', 'Sağ', 10, 165, 58.5, 'Fenerbahçe U19', 'Fenerbahçe U16, Fenerbahçe U19', '2024-01-01', '2026-12-31', 'A+', '', 'Sağlam', '0555-123-4567', 'aleyna.can@example.com', 'Anne: 0555-987-6543', 'Hızlı ve teknikli forvet', team_id),
+                ('Berra', 'Pekgöz', '2004-07-22', 'Türkiye', 'CM', 'CDM,CAM', 'Sol', 8, 168, 61.0, 'Galatasaray U19', 'Galatasaray U16, Galatasaray U19', '2024-01-01', '2026-12-31', 'O-', '', 'Sağlam', '0555-234-5678', 'berra.pekgoz@example.com', 'Baba: 0555-876-5432', 'Orta saha organizatörü', team_id),
+                ('Ecemnur', 'Öztürk', '2005-11-08', 'Türkiye', 'CB', 'LB,RB', 'Sağ', 4, 172, 64.5, 'Beşiktaş U19', 'Beşiktaş U16, Beşiktaş U19', '2024-01-01', '2026-12-31', 'B+', 'Diz sakatlığı - 2023 (2 ay)', 'Sağlam', '0555-345-6789', 'ecemnur.ozturk@example.com', 'Anne: 0555-765-4321', 'Güçlü ve hava toplarında iyi', team_id)
+            ]
+            conn.executemany("INSERT INTO players (first_name, last_name, birth_date, nationality, primary_position, secondary_positions, preferred_foot, jersey_number, height_cm, weight_kg, previous_club, club_history, contract_start, contract_end, blood_type, injury_history, current_injury_status, phone, email, emergency_contact, notes, team_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", sample_players)
+            conn.commit()
+            print("Database initialized and demo user created.")
+        except sqlite3.IntegrityError:
+            print("Demo user already exists.")
 
 @app.route('/')
 def index():
@@ -164,6 +200,93 @@ def logout():
     session.clear()
     return jsonify({'success': True})
 
+@app.route('/api/user/profile', methods=['GET', 'PUT'])
+@login_required
+def user_profile():
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    if request.method == 'GET':
+        user = conn.execute('SELECT id, username, email, created_at FROM users WHERE id = ?', (user_id,)).fetchone()
+        if not user:
+            conn.close()
+            return jsonify({'error': 'Kullanıcı bulunamadı'}), 404
+        
+        # Get user stats
+        team_count = conn.execute('SELECT COUNT(*) FROM teams WHERE user_id = ?', (user_id,)).fetchone()[0]
+        player_count = conn.execute('''
+            SELECT COUNT(*) FROM players p 
+            JOIN teams t ON p.team_id = t.id 
+            WHERE t.user_id = ?
+        ''', (user_id,)).fetchone()[0]
+        activity_count = conn.execute('''
+            SELECT COUNT(*) FROM activities a 
+            JOIN players p ON a.player_id = p.id 
+            JOIN teams t ON p.team_id = t.id 
+            WHERE t.user_id = ?
+        ''', (user_id,)).fetchone()[0]
+        
+        conn.close()
+        return jsonify({
+            'user': dict(user),
+            'stats': {
+                'team_count': team_count,
+                'player_count': player_count,
+                'activity_count': activity_count
+            }
+        })
+    
+    if request.method == 'PUT':
+        data = request.json
+        username = data.get('username')
+        email = data.get('email')
+        
+        if not username or not email:
+            conn.close()
+            return jsonify({'error': 'Kullanıcı adı ve email gerekli'}), 400
+        
+        try:
+            conn.execute('UPDATE users SET username = ?, email = ? WHERE id = ?', (username, email, user_id))
+            conn.commit()
+            session['username'] = username
+            conn.close()
+            return jsonify({'success': True, 'message': 'Profil güncellendi'})
+        except sqlite3.IntegrityError as e:
+            conn.close()
+            if 'username' in str(e):
+                return jsonify({'error': 'Bu kullanıcı adı zaten kullanılıyor'}), 409
+            elif 'email' in str(e):
+                return jsonify({'error': 'Bu email adresi zaten kullanılıyor'}), 409
+            return jsonify({'error': 'Güncelleme hatası'}), 409
+
+@app.route('/api/user/password', methods=['PUT'])
+@login_required
+def change_password():
+    user_id = session['user_id']
+    data = request.json
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    
+    if not current_password or not new_password:
+        return jsonify({'error': 'Mevcut ve yeni şifre gerekli'}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({'error': 'Yeni şifre en az 6 karakter olmalı'}), 400
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT password_hash FROM users WHERE id = ?', (user_id,)).fetchone()
+    
+    if not user or not verify_password(current_password, user['password_hash']):
+        conn.close()
+        return jsonify({'error': 'Mevcut şifre yanlış'}), 400
+    
+    new_password_hash = hash_password(new_password)
+    conn.execute('UPDATE users SET password_hash = ? WHERE id = ?', (new_password_hash, user_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Şifre güncellendi'})
+
 @app.route('/api/teams', methods=['GET', 'POST'])
 @login_required
 def handle_teams():
@@ -191,6 +314,58 @@ def handle_teams():
             conn.close()
             return jsonify({'error': 'Bu takım adı zaten var'}), 409
 
+@app.route('/api/teams/<int:team_id>', methods=['PUT', 'DELETE'])
+@login_required
+def manage_team(team_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Check if team belongs to user
+    team = conn.execute('SELECT * FROM teams WHERE id = ? AND user_id = ?', (team_id, user_id)).fetchone()
+    if not team:
+        conn.close()
+        return jsonify({'error': 'Takım bulunamadı veya yetkiniz yok'}), 404
+    
+    if request.method == 'PUT':
+        data = request.json
+        new_name = data.get('name')
+        if not new_name:
+            conn.close()
+            return jsonify({'error': 'Takım adı gerekli'}), 400
+        try:
+            conn.execute('UPDATE teams SET name = ? WHERE id = ?', (new_name, team_id))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'message': 'Takım adı güncellendi'})
+        except sqlite3.IntegrityError:
+            conn.close()
+            return jsonify({'error': 'Bu takım adı zaten kullanılıyor'}), 409
+    
+    if request.method == 'DELETE':
+        # Get stats before deletion
+        player_count = conn.execute('SELECT COUNT(*) FROM players WHERE team_id = ?', (team_id,)).fetchone()[0]
+        activity_count = conn.execute('''
+            SELECT COUNT(*) FROM activities a 
+            JOIN players p ON a.player_id = p.id 
+            WHERE p.team_id = ?
+        ''', (team_id,)).fetchone()[0]
+        
+        # Delete team (cascading will handle players and activities via foreign keys)
+        # First delete activities, then players, then team
+        conn.execute('''
+            DELETE FROM activities WHERE player_id IN 
+            (SELECT id FROM players WHERE team_id = ?)
+        ''', (team_id,))
+        conn.execute('DELETE FROM players WHERE team_id = ?', (team_id,))
+        conn.execute('DELETE FROM teams WHERE id = ?', (team_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Takım silindi: {player_count} oyuncu, {activity_count} aktivite verisi kaldırıldı'
+        })
+
 @app.route('/api/players', methods=['GET', 'POST'])
 @login_required
 def handle_players():
@@ -209,19 +384,19 @@ def handle_players():
             conn.close()
             return jsonify({'error': 'Yetkisiz erişim'}), 403
         
-        players = conn.execute('SELECT * FROM players WHERE team_id = ? ORDER BY name', (team_id,)).fetchall()
+        players = conn.execute('SELECT * FROM players WHERE team_id = ? ORDER BY first_name, last_name', (team_id,)).fetchall()
         conn.close()
         return jsonify([dict(row) for row in players])
 
     if request.method == 'POST':
         data = request.json
-        name = data.get('name')
-        position = data.get('position')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
         team_id = data.get('team_id')
         
-        if not all([name, position, team_id]):
+        if not all([first_name, last_name, team_id]):
             conn.close()
-            return jsonify({'error': 'Eksik veri'}), 400
+            return jsonify({'error': 'Ad, soyad ve takım bilgisi gerekli'}), 400
         
         # Takımın kullanıcıya ait olduğunu kontrol et
         team_check = conn.execute('SELECT id FROM teams WHERE id = ? AND user_id = ?', (team_id, user_id)).fetchone()
@@ -229,11 +404,140 @@ def handle_players():
             conn.close()
             return jsonify({'error': 'Yetkisiz erişim'}), 403
         
-        cursor = conn.execute('INSERT INTO players (name, position, team_id) VALUES (?, ?, ?)', (name, position, team_id))
+        # Insert player with all fields
+        cursor = conn.execute('''
+            INSERT INTO players (first_name, last_name, birth_date, nationality, primary_position, 
+                               secondary_positions, preferred_foot, jersey_number, height_cm, weight_kg,
+                               previous_club, club_history, contract_start, contract_end, blood_type,
+                               injury_history, current_injury_status, phone, email, emergency_contact, notes, team_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            first_name, last_name, data.get('birth_date'), data.get('nationality'),
+            data.get('primary_position'), data.get('secondary_positions'), data.get('preferred_foot'),
+            data.get('jersey_number'), data.get('height_cm'), data.get('weight_kg'),
+            data.get('previous_club'), data.get('club_history'), data.get('contract_start'),
+            data.get('contract_end'), data.get('blood_type'), data.get('injury_history'),
+            data.get('current_injury_status'), data.get('phone'), data.get('email'),
+            data.get('emergency_contact'), data.get('notes'), team_id
+        ))
         conn.commit()
         player_id = cursor.lastrowid
         conn.close()
-        return jsonify({'id': player_id, 'name': name}), 201
+        return jsonify({'id': player_id, 'name': f'{first_name} {last_name}'}), 201
+
+@app.route('/api/players/<int:player_id>', methods=['PUT', 'DELETE'])
+@login_required
+def manage_player(player_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Check if player belongs to user's team
+    player = conn.execute('''
+        SELECT p.* FROM players p 
+        JOIN teams t ON p.team_id = t.id 
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Oyuncu bulunamadı veya yetkiniz yok'}), 404
+    
+    if request.method == 'PUT':
+        data = request.json
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        
+        if not first_name or not last_name:
+            conn.close()
+            return jsonify({'error': 'Ad ve soyad gerekli'}), 400
+        
+        # Update player with all fields
+        conn.execute('''
+            UPDATE players SET first_name = ?, last_name = ?, birth_date = ?, nationality = ?,
+                             primary_position = ?, secondary_positions = ?, preferred_foot = ?,
+                             jersey_number = ?, height_cm = ?, weight_kg = ?, previous_club = ?,
+                             club_history = ?, contract_start = ?, contract_end = ?, blood_type = ?,
+                             injury_history = ?, current_injury_status = ?, phone = ?, email = ?,
+                             emergency_contact = ?, notes = ?
+            WHERE id = ?
+        ''', (
+            first_name, last_name, data.get('birth_date'), data.get('nationality'),
+            data.get('primary_position'), data.get('secondary_positions'), data.get('preferred_foot'),
+            data.get('jersey_number'), data.get('height_cm'), data.get('weight_kg'),
+            data.get('previous_club'), data.get('club_history'), data.get('contract_start'),
+            data.get('contract_end'), data.get('blood_type'), data.get('injury_history'),
+            data.get('current_injury_status'), data.get('phone'), data.get('email'),
+            data.get('emergency_contact'), data.get('notes'), player_id
+        ))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Oyuncu bilgileri güncellendi'})
+    
+    if request.method == 'DELETE':
+        # Get activity count before deletion
+        activity_count = conn.execute('SELECT COUNT(*) FROM activities WHERE player_id = ?', (player_id,)).fetchone()[0]
+        
+        # Delete player and their activities
+        conn.execute('DELETE FROM activities WHERE player_id = ?', (player_id,))
+        conn.execute('DELETE FROM players WHERE id = ?', (player_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Oyuncu silindi: {activity_count} aktivite verisi kaldırıldı'
+        })
+
+@app.route('/api/teams/<int:team_id>/stats', methods=['GET'])
+@login_required
+def get_team_delete_stats(team_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Verify team ownership
+    team = conn.execute('SELECT * FROM teams WHERE id = ? AND user_id = ?', (team_id, user_id)).fetchone()
+    if not team:
+        conn.close()
+        return jsonify({'error': 'Takım bulunamadı'}), 404
+    
+    player_count = conn.execute('SELECT COUNT(*) FROM players WHERE team_id = ?', (team_id,)).fetchone()[0]
+    activity_count = conn.execute('''
+        SELECT COUNT(*) FROM activities a 
+        JOIN players p ON a.player_id = p.id 
+        WHERE p.team_id = ?
+    ''', (team_id,)).fetchone()[0]
+    
+    conn.close()
+    return jsonify({
+        'team_name': team['name'],
+        'player_count': player_count,
+        'activity_count': activity_count
+    })
+
+@app.route('/api/players/<int:player_id>/stats', methods=['GET'])
+@login_required
+def get_player_delete_stats(player_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Verify player ownership
+    player = conn.execute('''
+        SELECT p.first_name, p.last_name FROM players p 
+        JOIN teams t ON p.team_id = t.id 
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Oyuncu bulunamadı'}), 404
+    
+    activity_count = conn.execute('SELECT COUNT(*) FROM activities WHERE player_id = ?', (player_id,)).fetchone()[0]
+    
+    conn.close()
+    return jsonify({
+        'player_name': f"{player['first_name']} {player['last_name']}",
+        'activity_count': activity_count
+    })
 
 @app.route('/api/activities', methods=['POST'])
 @login_required

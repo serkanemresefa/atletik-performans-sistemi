@@ -3,189 +3,473 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚽ Atletik Performans Takip Sistemi</title>
+    <title>Atletik Performans Takip Sistemi</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header, .team-management { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header h1 { color: #4a5568; margin-bottom: 10px; text-align: center; }
-        .team-selector-container { display: flex; gap: 10px; align-items: center; margin-top: 15px; flex-wrap: wrap; }
-        .nav-tabs { display: flex; background: white; border-radius: 10px; padding: 5px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-tab { flex: 1; padding: 12px 16px; background: transparent; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
-        .nav-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .tab-content { display: none; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header, .tab-content { 
+            background: white; 
+            border: 1px solid #dee2e6;
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+        }
+        .header h1 { 
+            color: #212529; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        .team-selector-container { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .nav-tabs { 
+            display: flex; 
+            background-color: #e9ecef;
+            border-radius: 8px; 
+            padding: 5px; 
+            margin-bottom: 20px; 
+        }
+        .nav-tab { 
+            flex: 1; 
+            padding: 10px 16px; 
+            background: transparent; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            color: #495057;
+            text-align: center;
+            transition: all 0.3s ease; 
+        }
+        .nav-tab.active { 
+            background-color: white; 
+            color: #0d6efd; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .tab-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
-        .stat-number { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }
+        .stat-card { 
+            background: white; 
+            border: 1px solid #dee2e6;
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center; 
+        }
+        .stat-number { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            color: #0d6efd;
+        }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #4a5568; }
-        .form-control { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: border-color 0.3s ease; }
-        .form-control:focus { outline: none; border-color: #667eea; }
-        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: transform 0.2s ease; }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-success { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
+        .form-control { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ced4da; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            transition: border-color 0.2s ease, box-shadow 0.2s ease; 
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .btn { 
+            background-color: #0d6efd; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: background-color 0.2s ease; 
+        }
+        .btn:hover { background-color: #0b5ed7; }
+        .btn-success { background-color: #198754; }
+        .btn-success:hover { background-color: #157347; }
+        .btn-danger {
+            background-color: #dc3545;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .btn-danger:hover { background-color: #bb2d3b; }
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .table-container { background: #f7fafc; border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .table-container { 
+            background: white; 
+            border: 1px solid #dee2e6;
+            border-radius: 8px; 
+            padding: 20px; 
+            margin-top: 20px; 
+        }
         .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .table th { background: #edf2f7; font-weight: 600; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        .table th { background: #f8f9fa; font-weight: 600; }
         .chart-container { height: 400px; margin: 20px 0; }
-        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .loading { text-align: center; padding: 40px; color: #718096; }
+        .alert { 
+            padding: 12px 16px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            border: 1px solid transparent;
+        }
+        .alert-success { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc; }
+        .alert-error { background-color: #f8d7da; color: #842029; border-color: #f5c2c7; }
+        .loading { text-align: center; padding: 40px; color: #6c757d; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 5% auto; padding: 0; border-radius: 8px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; }
+        .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #000; }
         @media (max-width: 768px) { .nav-tabs, .team-selector-container { flex-direction: column; } .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚽ Atletik Performans Takip Sistemi</h1>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div class="team-selector-container">
-                    <label for="team-select" style="font-weight: 500;">Takım Seç:</label>
-                    <select id="team-select" class="form-control" onchange="handleTeamChange()" style="min-width: 200px;"></select>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <span id="user-info" style="color: #4a5568; font-weight: 500;"></span>
-                    <button onclick="logout()" class="btn" style="padding: 8px 16px; font-size: 14px;">🚪 Çıkış</button>
-                </div>
+            <h1>Atletik Performans Takip Sistemi</h1>
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <span id="user-info" style="color: #495057; font-weight: 500;"></span>
+                <button onclick="logout()" class="btn btn-danger">Çıkış</button>
             </div>
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('team-dashboard')">🏆 Dashboard</button>
-            <button class="nav-tab" onclick="showTab('team-management')">🛠️ Takım Yönetimi</button>
-            <button class="nav-tab" onclick="showTab('players')">👥 Oyuncular</button>
-            <button class="nav-tab" onclick="showTab('data-entry')">➕ Veri Girişi</button>
-            <button class="nav-tab" onclick="showTab('analysis')">📈 Analiz</button>
+            <button class="nav-tab active" onclick="showTab('user-profile')">Profil</button>
+            <button class="nav-tab" onclick="showTab('team-management')">Takım Yönetimi</button>
+            <button class="nav-tab" onclick="showTab('players')">Antrenman Yönetimi</button>
+            <button class="nav-tab" onclick="showTab('analysis')">Analiz</button>
         </div>
 
-        <!-- Team Dashboard Tab -->
-        <div id="team-dashboard" class="tab-content active">
-            <h2 id="dashboard-title">🏆 Takım Performans Özeti</h2>
+        <!-- User Profile Tab -->
+        <div id="user-profile" class="tab-content active">
+            <h2 style="text-align: center; margin-bottom: 40px;">Hoşgeldiniz! <span id="welcome-username">-</span></h2>
+            <div id="profile-alert"></div>
+            
             <div class="stats-grid">
-                <div class="stat-card"><div class="stat-number" id="total-players">-</div><div>Toplam Oyuncu</div></div>
-                <div class="stat-card"><div class="stat-number" id="total-activities">-</div><div>Toplam Aktivite</div></div>
-                <div class="stat-card"><div class="stat-number" id="total-trainings">-</div><div>Antrenman Sayısı</div></div>
-                <div class="stat-card"><div class="stat-number" id="total-matches">-</div><div>Maç Sayısı</div></div>
+                <div class="stat-card"><div class="stat-number" id="user-teams">-</div><div>Toplam Takım</div></div>
+                <div class="stat-card"><div class="stat-number" id="user-players">-</div><div>Toplam Oyuncu</div></div>
+                <div class="stat-card"><div class="stat-number" id="user-activities">-</div><div>Toplam Aktivite</div></div>
+                <div class="stat-card"><div class="stat-number" id="user-since">-</div><div>Hesap Yaşı (gün)</div></div>
             </div>
-            <div class="table-container">
-                <h3>🕐 Son Aktiviteler</h3>
-                <table class="table"><thead><tr><th>Tarih</th><th>Oyuncu</th><th>Tür</th><th>Mesafe (m)</th><th>Süre (dk)</th></tr></thead><tbody id="recent-activities"></tbody></table>
+
+            <div class="form-row" style="margin-top: 40px;">
+                <div style="flex: 1; margin-right: 20px;">
+                    <div class="table-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Profil Bilgileri</h3>
+                            <button class="btn btn-sm" onclick="toggleProfileEdit()" id="profile-edit-toggle">Düzenle</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Kullanıcı Adı</label>
+                            <div class="profile-info">
+                                <span id="profile-username-display">-</span>
+                                <input type="text" id="profile-username-edit" class="form-control" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <div class="profile-info">
+                                <span id="profile-email-display">-</span>
+                                <input type="email" id="profile-email-edit" class="form-control" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Hesap Oluşturma Tarihi</label>
+                            <span id="profile-created-date">-</span>
+                        </div>
+                        <div id="profile-edit-buttons" style="display: none; margin-top: 20px;">
+                            <button class="btn btn-success" onclick="saveProfile()">Kaydet</button>
+                            <button class="btn" onclick="cancelProfileEdit()" style="margin-left: 10px;">İptal</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <div class="table-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Güvenlik</h3>
+                            <button class="btn btn-sm" onclick="togglePasswordEdit()" id="password-edit-toggle">Şifre Değiştir</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Son Şifre Değiştirme</label>
+                            <span>Henüz değiştirilmemiş</span>
+                        </div>
+                        <div id="password-edit-form" style="display: none;">
+                            <div class="form-group">
+                                <label for="current-password">Mevcut Şifre</label>
+                                <input type="password" id="current-password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password">Yeni Şifre (en az 6 karakter)</label>
+                                <input type="password" id="new-password" class="form-control" required minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Yeni Şifre Tekrar</label>
+                                <input type="password" id="confirm-password" class="form-control" required minlength="6">
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <button class="btn btn-success" onclick="savePassword()">Şifre Değiştir</button>
+                                <button class="btn" onclick="cancelPasswordEdit()" style="margin-left: 10px;">İptal</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Players Tab -->
         <div id="players" class="tab-content">
-            <h2>👥 Oyuncu Yönetimi</h2>
-            <div id="player-alert"></div>
-            <form id="player-form">
-                <div class="form-row">
-                    <div class="form-group"><label for="player-name">Oyuncu Adı</label><input type="text" id="player-name" class="form-control" required></div>
-                    <div class="form-group"><label for="player-position">Pozisyon</label><select id="player-position" class="form-control" required><option value="Forward">Forvet</option><option value="Midfielder">Orta Saha</option><option value="Defender">Defans</option><option value="Goalkeeper">Kaleci</option></select></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Antrenman Yönetimi</h2>
+                <div class="team-selector-container">
+                    <label for="player-team-select" style="font-weight: 500;">Takım Seç:</label>
+                    <select id="player-team-select" class="form-control" onchange="handlePlayerTeamChange()" style="min-width: 200px; margin-left: 10px;"></select>
                 </div>
-                <button type="submit" class="btn">➕ Oyuncu Ekle</button>
-            </form>
+            </div>
+            <div id="player-alert"></div>
             <div class="table-container">
-                <h3>📋 Mevcut Oyuncular</h3>
-                <table class="table"><thead><tr><th>Oyuncu Adı</th><th>Pozisyon</th><th>Kayıt Tarihi</th></tr></thead><tbody id="players-table"></tbody></table>
+                <h3>Mevcut Oyuncular</h3>
+                <table class="table"><thead><tr><th>Oyuncu Adı</th><th>Pozisyon</th><th>Kayıt Tarihi</th><th>Aksiyonlar</th></tr></thead><tbody id="players-table"></tbody></table>
             </div>
         </div>
 
-        <!-- Data Entry Tab -->
-        <div id="data-entry" class="tab-content">
-            <h2>➕ Günlük Veri Girişi</h2>
-            <div id="data-entry-alert"></div>
-            <form id="activity-form">
-                <div class="form-row">
-                    <div class="form-group"><label for="player-select">Oyuncu Seçin</label><select id="player-select" class="form-control" required></select></div>
-                    <div class="form-group"><label for="activity-date">Tarih</label><input type="date" id="activity-date" class="form-control" required></div>
-                    <div class="form-group"><label for="activity-type">Aktivite Türü</label><select id="activity-type" class="form-control" required><option value="">Seçin...</option><option value="training">Antrenman</option><option value="match">Maç</option></select></div>
-                </div>
-                <!-- Ek veri giriş alanları -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="duration">Süre (dk)</label>
-                        <input type="number" id="duration" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="distance">Toplam Mesafe (m)</label>
-                        <input type="number" id="distance" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="hs16">16+ km/h Mesafe (m)</label>
-                        <input type="number" id="hs16" class="form-control" min="0" step="1">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="hs18">18+ km/h Mesafe (m)</label>
-                        <input type="number" id="hs18" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="hs20">20+ km/h Mesafe (m)</label>
-                        <input type="number" id="hs20" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="sprint">24+ km/h Sprint Mesafe (m)</label>
-                        <input type="number" id="sprint" class="form-control" min="0" step="1">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="acc">İvmelenme/Decc Sayısı</label>
-                        <input type="number" id="acc" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="high_acc">Yüksek İvmelenme Sayısı</label>
-                        <input type="number" id="high_acc" class="form-control" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="metabolic">Metabolik Güç Mesafesi (m)</label>
-                        <input type="number" id="metabolic" class="form-control" min="0" step="1">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="notes">Notlar</label>
-                    <textarea id="notes" class="form-control" rows="2"></textarea>
-                </div>
-                <button type="submit" class="btn btn-success">💾 Kaydet</button>
-            </form>
-        </div>
 
         <!-- Analysis Tab -->
         <div id="analysis" class="tab-content">
-            <h2>📈 Performans Analizi</h2>
+            <h2>Performans Analizi</h2>
             <div id="analysis-alert"></div>
             <div class="form-row">
                 <div class="form-group"><label for="analysis-players">Oyuncular (Ctrl+Click çoklu seçim)</label><select id="analysis-players" class="form-control" multiple size="5"></select></div>
                 <div class="form-group"><label for="start-date">Başlangıç Tarihi</label><input type="date" id="start-date" class="form-control"></div>
                 <div class="form-group"><label for="end-date">Bitiş Tarihi</label><input type="date" id="end-date" class="form-control"></div>
             </div>
-            <button onclick="runAnalysis()" class="btn">🔄 Analiz Yap</button>
+            <button onclick="runAnalysis()" class="btn">Analiz Yap</button>
             <div id="analysis-results" style="display: none;">
                 <div class="chart-container"><canvas id="analysis-chart"></canvas></div>
-                <div class="table-container"><h3>📋 Detaylı Sonuçlar</h3><table class="table"><thead><tr><th>Oyuncu</th><th>Ant. Ort.</th><th>Maç Ort.</th><th>Mesafe %</th><th>HS16 %</th><th>HS20 %</th><th>Sprint %</th></tr></thead><tbody id="analysis-table"></tbody></table></div>
+                <div class="table-container"><h3>Detaylı Sonuçlar</h3><table class="table"><thead><tr><th>Oyuncu</th><th>Ant. Ort.</th><th>Maç Ort.</th><th>Mesafe %</th><th>HS16 %</th><th>HS20 %</th><th>Sprint %</th></tr></thead><tbody id="analysis-table"></tbody></table></div>
             </div>
         </div>
 
         <!-- Team Management Tab -->
         <div id="team-management" class="tab-content">
-            <h2>🛠️ Takım Yönetimi</h2>
+            <h2>Takım & Oyuncu Yönetimi</h2>
             <div id="team-alert"></div>
-            <form id="team-form">
-                <div class="form-row">
-                    <div class="form-group"><label for="team-name">Yeni Takım Adı</label><input type="text" id="team-name" class="form-control" required></div>
-                </div>
-                <button type="submit" class="btn">➕ Takım Ekle</button>
-            </form>
+            
+            <!-- Step 1: Team Creation -->
             <div class="table-container">
-                <h3>Mevcut Takımlar</h3>
-                <table class="table"><thead><tr><th>Takım Adı</th><th>Kayıt Tarihi</th></tr></thead><tbody id="teams-table"></tbody></table>
+                <h3>1️⃣ Takım Oluşturma</h3>
+                <form id="team-form">
+                    <div class="form-row">
+                        <div class="form-group"><label for="team-name">Takım Adı</label><input type="text" id="team-name" class="form-control" required placeholder="örn: U17 Milli Takım"></div>
+                    </div>
+                    <button type="submit" class="btn">Takım Oluştur</button>
+                </form>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Mevcut Takımlarınız</h4>
+                    <table class="table"><thead><tr><th>Takım Adı</th><th>Kayıt Tarihi</th><th>Oyuncu Sayısı</th><th>Aksiyonlar</th></tr></thead><tbody id="teams-table"></tbody></table>
+                </div>
+            </div>
+            
+            <!-- Step 2: Player Management -->
+            <div class="table-container" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>2️⃣ Oyuncu Yönetimi</h3>
+                    <div>
+                        <label for="team-management-select" style="margin-right: 10px;">Takım Seç:</label>
+                        <select id="team-management-select" class="form-control" style="display: inline-block; width: auto; min-width: 200px;" onchange="handleTeamManagementChange()">
+                            <option value="">Takım seçiniz</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="player-management-section" style="display: none;">
+                    <button class="btn btn-success" onclick="openPlayerModal()" style="margin-bottom: 20px;">➕ Yeni Oyuncu Ekle</button>
+                    
+                    <div id="players-grid" class="stats-grid">
+                        <!-- Player cards will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Player Detail Modal -->
+        <div id="player-modal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h3 id="player-modal-title">Yeni Oyuncu Ekle</h3>
+                    <span class="close" onclick="closePlayerModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="player-detail-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-first-name">Ad *</label>
+                                <input type="text" id="player-first-name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-last-name">Soyad *</label>
+                                <input type="text" id="player-last-name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-birth-date">Doğum Tarihi</label>
+                                <input type="date" id="player-birth-date" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-nationality">Uyruk</label>
+                                <input type="text" id="player-nationality" class="form-control" placeholder="Türkiye">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-primary-position">Ana Pozisyon</label>
+                                <select id="player-primary-position" class="form-control">
+                                    <option value="">Seçiniz</option>
+                                    <option value="GK">Kaleci (GK)</option>
+                                    <option value="CB">Stoper (CB)</option>
+                                    <option value="LB">Sol Bek (LB)</option>
+                                    <option value="RB">Sağ Bek (RB)</option>
+                                    <option value="CDM">Defansif Orta Saha (CDM)</option>
+                                    <option value="CM">Orta Saha (CM)</option>
+                                    <option value="CAM">Ofansif Orta Saha (CAM)</option>
+                                    <option value="LM">Sol Orta Saha (LM)</option>
+                                    <option value="RM">Sağ Orta Saha (RM)</option>
+                                    <option value="LW">Sol Kanat (LW)</option>
+                                    <option value="RW">Sağ Kanat (RW)</option>
+                                    <option value="ST">Santrafor (ST)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-secondary-positions">Alt Pozisyonlar</label>
+                                <input type="text" id="player-secondary-positions" class="form-control" placeholder="CM,CAM">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-preferred-foot">Tercih Ettiği Ayak</label>
+                                <select id="player-preferred-foot" class="form-control">
+                                    <option value="">Seçiniz</option>
+                                    <option value="Sağ">Sağ</option>
+                                    <option value="Sol">Sol</option>
+                                    <option value="Her ikisi">Her ikisi</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="player-jersey-number">Forma Numarası</label>
+                                <input type="number" id="player-jersey-number" class="form-control" min="1" max="99">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-height">Boy (cm)</label>
+                                <input type="number" id="player-height" class="form-control" min="140" max="220">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-weight">Kilo (kg)</label>
+                                <input type="number" id="player-weight" class="form-control" min="35" max="150" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-previous-club">Geldiği Takım</label>
+                                <input type="text" id="player-previous-club" class="form-control" placeholder="Fenerbahçe U19">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-blood-type">Kan Grubu</label>
+                                <select id="player-blood-type" class="form-control">
+                                    <option value="">Seçiniz</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-phone">Telefon</label>
+                                <input type="tel" id="player-phone" class="form-control" placeholder="0555-123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-email">Email</label>
+                                <input type="email" id="player-email" class="form-control" placeholder="oyuncu@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="player-emergency-contact">Acil Durum Kişisi</label>
+                                <input type="text" id="player-emergency-contact" class="form-control" placeholder="Anne: 0555-987-6543">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-notes">Notlar</label>
+                            <textarea id="player-notes" class="form-control" rows="3" placeholder="Oyuncu hakkında notlar..."></textarea>
+                        </div>
+                        
+                        <div id="player-modal-alert"></div>
+                        <button type="submit" class="btn btn-success">Kaydet</button>
+                        <button type="button" class="btn" onclick="closePlayerModal()" style="margin-left: 10px;">İptal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Entry Modal -->
+    <div id="data-entry-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-player-name">Veri Girişi</h3>
+                <span class="close" onclick="closeDataEntryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="modal-activity-form">
+                    <input type="hidden" id="modal-player-id">
+                    <div class="form-row">
+                        <div class="form-group"><label for="modal-activity-date">Tarih</label><input type="date" id="modal-activity-date" class="form-control" required></div>
+                        <div class="form-group"><label for="modal-activity-type">Aktivite Türü</label><select id="modal-activity-type" class="form-control" required><option value="">Seçin...</option><option value="training">Antrenman</option><option value="match">Maç</option></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="modal-duration">Süre (dk)</label><input type="number" id="modal-duration" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-distance">Toplam Mesafe (m)</label><input type="number" id="modal-distance" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-hs16">16+ km/h Mesafe (m)</label><input type="number" id="modal-hs16" class="form-control" min="0" step="1"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="modal-hs18">18+ km/h Mesafe (m)</label><input type="number" id="modal-hs18" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-hs20">20+ km/h Mesafe (m)</label><input type="number" id="modal-hs20" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-sprint">24+ km/h Sprint Mesafe (m)</label><input type="number" id="modal-sprint" class="form-control" min="0" step="1"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="modal-acc">İvmelenme/Decc Sayısı</label><input type="number" id="modal-acc" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-high_acc">Yüksek İvmelenme Sayısı</label><input type="number" id="modal-high_acc" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-metabolic">Metabolik Güç Mesafesi (m)</label><input type="number" id="modal-metabolic" class="form-control" min="0" step="1"></div>
+                    </div>
+                    <div class="form-group"><label for="modal-notes">Notlar</label><textarea id="modal-notes" class="form-control" rows="2"></textarea></div>
+                    <div id="modal-alert"></div>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                    <button type="button" class="btn" onclick="closeDataEntryModal()" style="margin-left: 10px;">İptal</button>
+                </form>
             </div>
         </div>
     </div>
@@ -199,8 +483,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
+            loadUserProfile();
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('activity-date').value = today;
             document.getElementById('start-date').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
             document.getElementById('end-date').value = today;
         });
@@ -234,14 +518,15 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(tabName === 'team-management') loadTeamsTable();
+            if(tabName === 'team-management') {
+                loadTeamsTable();
+                loadTeamManagementDropdown();
+            }
             
-            // Tab değişikliklerinde uyarıları göster
             const tabMessages = {
-                'team-management': currentTeamId ? '' : 'Önce bir takım oluşturun veya seçin.',
-                'players': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : '',
-                'data-entry': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : (players.length === 0 ? 'Bu takımda oyuncu yok. Önce oyuncu ekleyin.' : ''),
-                'analysis': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : (players.length === 0 ? 'Bu takımda oyuncu yok. Analiz için oyuncu gerekli.' : '')
+                'team-management': '',
+                'players': !currentTeamId ? 'Profil sekmesinden bir takım seçmelisiniz.' : '',
+                'analysis': !currentTeamId ? 'Profil sekmesinden bir takım seçmelisiniz.' : (players.length === 0 ? 'Bu takımda oyuncu yok. Analiz için oyuncu gerekli.' : '')
             };
             
             const message = tabMessages[tabName];
@@ -249,10 +534,13 @@
                 const alertIds = {
                     'team-management': 'team-alert',
                     'players': 'player-alert', 
-                    'data-entry': 'data-entry-alert',
                     'analysis': 'analysis-alert'
                 };
                 setTimeout(() => showAlert(alertIds[tabName] || 'team-alert', 'error', message), 100);
+            }
+            
+            if (tabName === 'user-profile') {
+                loadUserProfile();
             }
         }
 
@@ -273,93 +561,80 @@
                     throw new Error('Teams yüklenemedi');
                 }
                 teams = await response.json();
-                const teamSelect = document.getElementById('team-select');
-                teamSelect.innerHTML = '';
-                
-                if (teams.length > 0) {
-                    teamSelect.innerHTML = '<option value="">Takım seçin...</option>';
-                    teams.forEach(team => {
-                        const option = new Option(team.name, team.id);
-                        teamSelect.add(option);
-                    });
+                const teamSelect = document.getElementById('player-team-select');
+                if (teamSelect) {
+                    teamSelect.innerHTML = '';
                     
-                    // Önceki seçimi geri yükle
-                    const savedTeamId = localStorage.getItem('selectedTeamId');
-                    if (savedTeamId && teams.find(t => t.id == savedTeamId)) {
-                        teamSelect.value = savedTeamId;
-                        currentTeamId = savedTeamId;
+                    if (teams.length > 0) {
+                        teamSelect.innerHTML = '<option value="">Takım seçin...</option>';
+                        teams.forEach(team => {
+                            const option = new Option(team.name, team.id);
+                            teamSelect.add(option);
+                        });
+                        
+                        const savedTeamId = localStorage.getItem('selectedTeamId');
+                        if (savedTeamId && teams.find(t => t.id == savedTeamId)) {
+                            teamSelect.value = savedTeamId;
+                            currentTeamId = savedTeamId;
+                        }
+                    } else {
+                        teamSelect.innerHTML = '<option value="">Önce takım oluşturun</option>';
                     }
-                } else {
-                    teamSelect.innerHTML = '<option value="">Önce takım oluşturun</option>';
-                    showTab('team-management');
-                    showAlert('team-alert', 'success', 'Hoşgeldiniz! Lütfen önce bir takım oluşturun.');
+                    
+                    handlePlayerTeamChange();
                 }
-                
-                handleTeamChange();
             } catch (error) {
                 console.error('Error loading teams:', error);
                 showAlert('team-alert', 'error', 'Takımlar yüklenirken hata oluştu.');
             }
         }
 
-        function handleTeamChange() {
-            const teamSelect = document.getElementById('team-select');
+        function handlePlayerTeamChange() {
+            const teamSelect = document.getElementById('player-team-select');
             currentTeamId = teamSelect.value;
             
             if (currentTeamId) {
                 localStorage.setItem('selectedTeamId', currentTeamId);
-                loadDashboardData();
                 loadPlayers();
-                
-                // Seçili takım adını göster
-                const selectedTeam = teams.find(t => t.id == currentTeamId);
-                if (selectedTeam) {
-                    document.getElementById('dashboard-title').textContent = `🏆 ${selectedTeam.name} - Performans Özeti`;
-                }
             } else {
-                // Takım seçilmediğinde verileri temizle
-                document.getElementById('dashboard-title').textContent = '🏆 Takım Performans Özeti';
-                document.getElementById('total-players').textContent = '-';
-                document.getElementById('total-activities').textContent = '-';
-                document.getElementById('total-trainings').textContent = '-';
-                document.getElementById('total-matches').textContent = '-';
-                document.getElementById('recent-activities').innerHTML = '<tr><td colspan="5" class="loading">Takım seçiniz</td></tr>';
-                
                 players = [];
                 updatePlayerDropdowns();
                 loadPlayersTable();
             }
         }
 
-        async function loadDashboardData() {
-            if (!currentTeamId) return;
+        async function loadUserProfile() {
             try {
-                const response = await fetch(`/api/dashboard-stats?team_id=${currentTeamId}`);
+                const response = await fetch('/api/user/profile');
                 if (!response.ok) {
                     if (response.status === 401) {
                         window.location.href = '/';
                         return;
                     }
-                    throw new Error('Dashboard verileri yüklenemedi');
+                    throw new Error('Profil verileri yüklenemedi');
                 }
                 const data = await response.json();
-                document.getElementById('total-players').textContent = data.players_count;
-                document.getElementById('total-activities').textContent = data.activities_count;
-                document.getElementById('total-trainings').textContent = data.training_count;
-                document.getElementById('total-matches').textContent = data.match_count;
                 
-                const tbody = document.getElementById('recent-activities');
-                tbody.innerHTML = '';
-                if (data.recent_activities.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="loading">Henüz aktivite kaydı yok.</td></tr>';
-                } else {
-                    data.recent_activities.forEach(act => {
-                        tbody.innerHTML += `<tr><td>${act.date}</td><td>${act.player_name}</td><td>${act.activity_type === 'training' ? '🏃 Antrenman' : '⚽ Maç'}</td><td>${act.total_distance_m || '-'}</td><td>${act.duration_minutes || '-'}</td></tr>`;
-                    });
-                }
+                // Update profile display
+                document.getElementById('welcome-username').textContent = data.user.username;
+                document.getElementById('profile-username-display').textContent = data.user.username;
+                document.getElementById('profile-email-display').textContent = data.user.email;
+                document.getElementById('profile-created-date').textContent = new Date(data.user.created_at).toLocaleDateString('tr-TR');
+                document.getElementById('user-info').textContent = `Hoşgeldin, ${data.user.username}`;
+                
+                // Update stats
+                document.getElementById('user-teams').textContent = data.stats.team_count;
+                document.getElementById('user-players').textContent = data.stats.player_count;
+                document.getElementById('user-activities').textContent = data.stats.activity_count;
+                
+                // Calculate account age
+                const createdDate = new Date(data.user.created_at);
+                const daysSince = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('user-since').textContent = daysSince;
+                
             } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showAlert('team-alert', 'error', 'Dashboard verileri yüklenirken hata oluştu.');
+                console.error('Error loading profile:', error);
+                showAlert('profile-alert', 'error', 'Profil verileri yüklenirken hata oluştu.');
             }
         }
 
@@ -379,22 +654,24 @@
             const tbody = document.getElementById('players-table');
             tbody.innerHTML = '';
             if (players.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="loading">Bu takıma ait oyuncu yok.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="loading">Bu takıma ait oyuncu yok.</td></tr>';
             } else {
                 players.forEach(p => {
-                    tbody.innerHTML += `<tr><td>${p.name}</td><td>${p.position}</td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td></tr>`;
+                    // Handle both new schema (first_name/last_name) and old schema (name)
+                    const fullName = p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'İsimsiz Oyuncu';
+                    const position = p.primary_position || p.position || '-';
+                    
+                    tbody.innerHTML += `<tr><td><span id="player-name-${p.id}">${fullName}</span><input type="text" id="player-name-edit-${p.id}" value="${fullName}" class="form-control" style="display:none;"></td><td><span id="player-position-${p.id}">${position}</span><select id="player-position-edit-${p.id}" class="form-control" style="display:none;"><option value="Forward">Forvet</option><option value="Midfielder">Orta Saha</option><option value="Defender">Defans</option><option value="Goalkeeper">Kaleci</option></select></td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td><td><button class="btn btn-sm btn-success" onclick="openDataEntryModal(${p.id}, '${fullName}')" style="margin-right: 5px;">Veri Gir</button><button class="btn btn-sm" onclick="editPlayer(${p.id})" id="player-edit-btn-${p.id}" style="margin-right: 5px;">Düzenle</button><button class="btn btn-sm btn-success" onclick="savePlayer(${p.id})" id="player-save-btn-${p.id}" style="display:none; margin-right: 5px;">Kaydet</button><button class="btn btn-sm" onclick="cancelEditPlayer(${p.id})" id="player-cancel-btn-${p.id}" style="display:none; margin-right: 5px;">İptal</button><button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id}, '${fullName}')">Sil</button></td></tr>`;
                 });
             }
         }
 
         function updatePlayerDropdowns() {
-            const playerSelect = document.getElementById('player-select');
             const analysisPlayers = document.getElementById('analysis-players');
-            playerSelect.innerHTML = '<option value="">Oyuncu seçin...</option>';
             analysisPlayers.innerHTML = '';
             players.forEach(p => {
-                playerSelect.add(new Option(p.name, p.id));
-                analysisPlayers.add(new Option(p.name, p.id));
+                const fullName = p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'İsimsiz Oyuncu';
+                analysisPlayers.add(new Option(fullName, p.id));
             });
         }
 
@@ -438,8 +715,9 @@
                 if (response.ok) {
                     showAlert('team-alert', 'success', 'Takım eklendi.');
                     e.target.reset();
-                    loadTeams();
+                    await loadTeams(); // Wait for teams to load first
                     loadTeamsTable();
+                    loadTeamManagementDropdown();
                 } else {
                     showAlert('team-alert', 'error', data.error);
                 }
@@ -448,75 +726,35 @@
             }
         });
 
-        function loadTeamsTable() {
+        async function loadTeamsTable() {
             const tbody = document.getElementById('teams-table');
             tbody.innerHTML = '';
             if(teams.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" class="loading">Takım yok.</td></tr>';
-            } else {
-                teams.forEach(t => {
-                    tbody.innerHTML += `<tr><td>${t.name}</td><td>${new Date(t.created_at).toLocaleDateString('tr-TR')}</td></tr>`;
-                });
+                tbody.innerHTML = '<tr><td colspan="4" class="loading">Takım yok.</td></tr>';
+                return;
+            } 
+            
+            // Build all rows first, then insert at once
+            let rowsHTML = '';
+            for (const t of teams) {
+                // Get player count for each team
+                let playerCount = 0;
+                try {
+                    const response = await fetch(`/api/players?team_id=${t.id}`);
+                    if (response.ok) {
+                        const players = await response.json();
+                        playerCount = players.length;
+                    }
+                } catch (error) {
+                    console.error('Error loading player count:', error);
+                }
+                
+                rowsHTML += `<tr><td><span id="team-name-${t.id}">${t.name}</span><input type="text" id="team-edit-${t.id}" value="${t.name}" class="form-control" style="display:none;"></td><td>${new Date(t.created_at).toLocaleDateString('tr-TR')}</td><td>${playerCount} oyuncu</td><td><button class="btn btn-sm" onclick="editTeam(${t.id})" id="team-edit-btn-${t.id}" style="margin-right: 5px;">Düzenle</button><button class="btn btn-sm btn-success" onclick="saveTeam(${t.id})" id="team-save-btn-${t.id}" style="display:none; margin-right: 5px;">Kaydet</button><button class="btn btn-sm" onclick="cancelEditTeam(${t.id})" id="team-cancel-btn-${t.id}" style="display:none; margin-right: 5px;">İptal</button><button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id}, '${t.name}')">Sil</button></td></tr>`;
             }
+            tbody.innerHTML = rowsHTML;
         }
 
-        // Veri girişi formunu işle
-        document.getElementById('activity-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            if (!currentTeamId) {
-                showAlert('data-entry-alert', 'error', 'Önce bir takım seçmelisiniz.');
-                return;
-            }
-            const playerId = document.getElementById('player-select').value;
-            const date = document.getElementById('activity-date').value;
-            const activityType = document.getElementById('activity-type').value;
-            if (!playerId || !date || !activityType) {
-                showAlert('data-entry-alert', 'error', 'Lütfen zorunlu alanları doldurun.');
-                return;
-            }
-            // Topla diğer alanları; boşsa null olsun
-            const toInt = v => {
-                const parsed = parseInt(v, 10);
-                return isNaN(parsed) ? null : parsed;
-            };
-            const data = {
-                player_id: parseInt(playerId, 10),
-                date: date,
-                activity_type: activityType,
-                duration_minutes: toInt(document.getElementById('duration').value),
-                total_distance_m: toInt(document.getElementById('distance').value),
-                high_speed_16kmh_m: toInt(document.getElementById('hs16').value),
-                high_speed_18kmh_m: toInt(document.getElementById('hs18').value),
-                high_speed_20kmh_m: toInt(document.getElementById('hs20').value),
-                sprint_24kmh_m: toInt(document.getElementById('sprint').value),
-                acc_decc_count: toInt(document.getElementById('acc').value),
-                high_acc_decc_count: toInt(document.getElementById('high_acc').value),
-                high_metabolic_power_m: toInt(document.getElementById('metabolic').value),
-                notes: document.getElementById('notes').value || null
-            };
-            try {
-                const response = await fetch('/api/activities', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const resData = await response.json();
-                if (response.ok) {
-                    showAlert('data-entry-alert', 'success', 'Aktivite kaydedildi.');
-                    e.target.reset();
-                    // Tarih alanını tekrar bugüne ayarla
-                    document.getElementById('activity-date').value = new Date().toISOString().split('T')[0];
-                    loadDashboardData();
-                } else {
-                    showAlert('data-entry-alert', 'error', resData.error || 'Hata oluştu');
-                }
-            } catch (err) {
-                console.error('Error adding activity:', err);
-                showAlert('data-entry-alert', 'error', 'Sunucu hatası');
-            }
-        });
 
-        // Analiz fonksiyonu
         async function runAnalysis() {
             if (!currentTeamId) {
                 showAlert('analysis-alert', 'error', 'Önce bir takım seçmelisiniz.');
@@ -560,7 +798,6 @@
                     showAlert('analysis-alert', 'error', 'Seçilen tarih aralığında veri bulunamadı.');
                     return;
                 }
-                // Tabloyu doldur
                 const tbody = document.getElementById('analysis-table');
                 tbody.innerHTML = '';
                 const labels = [];
@@ -585,7 +822,7 @@
                     tbody.innerHTML += `<tr><td>${item.player_name}</td><td>${tDistDisplay}</td><td>${mDistDisplay}</td><td>${pctDist}</td><td>${pct16}</td><td>${pct20}</td><td>${pctSprint}</td></tr>`;
                 });
                 document.getElementById('analysis-results').style.display = 'block';
-                // Grafik
+                
                 const ctx = document.getElementById('analysis-chart').getContext('2d');
                 if (analysisChart) analysisChart.destroy();
                 analysisChart = new Chart(ctx, {
@@ -593,10 +830,10 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: 'Mesafe %', data: distanceData, backgroundColor: 'rgba(75, 192, 192, 0.6)' },
-                            { label: 'HS16 %', data: hs16Data, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
-                            { label: 'HS20 %', data: hs20Data, backgroundColor: 'rgba(255, 206, 86, 0.6)' },
-                            { label: 'Sprint %', data: sprintData, backgroundColor: 'rgba(255, 99, 132, 0.6)' }
+                            { label: 'Mesafe %', data: distanceData, backgroundColor: '#0d6efd' },
+                            { label: 'HS16 %', data: hs16Data, backgroundColor: '#6c757d' },
+                            { label: 'HS20 %', data: hs20Data, backgroundColor: '#198754' },
+                            { label: 'Sprint %', data: sprintData, backgroundColor: '#dc3545' }
                         ]
                     },
                     options: {
@@ -612,6 +849,541 @@
             } catch (err) {
                 console.error('Analysis error:', err);
                 showAlert('analysis-alert', 'error', 'Analiz sırasında hata oluştu.');
+            }
+        }
+
+        function openDataEntryModal(playerId, playerName) {
+            document.getElementById('modal-player-id').value = playerId;
+            document.getElementById('modal-player-name').textContent = `${playerName} - Veri Girişi`;
+            document.getElementById('modal-activity-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('data-entry-modal').style.display = 'block';
+            document.getElementById('modal-alert').innerHTML = '';
+            document.getElementById('modal-activity-form').reset();
+            document.getElementById('modal-activity-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        function closeDataEntryModal() {
+            document.getElementById('data-entry-modal').style.display = 'none';
+        }
+
+        document.getElementById('modal-activity-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const playerId = document.getElementById('modal-player-id').value;
+            const date = document.getElementById('modal-activity-date').value;
+            const activityType = document.getElementById('modal-activity-type').value;
+            
+            if (!playerId || !date || !activityType) {
+                showModalAlert('error', 'Lütfen zorunlu alanları doldurun.');
+                return;
+            }
+            
+            const toInt = v => {
+                const parsed = parseInt(v, 10);
+                return isNaN(parsed) ? null : parsed;
+            };
+            
+            const data = {
+                player_id: parseInt(playerId, 10),
+                date: date,
+                activity_type: activityType,
+                duration_minutes: toInt(document.getElementById('modal-duration').value),
+                total_distance_m: toInt(document.getElementById('modal-distance').value),
+                high_speed_16kmh_m: toInt(document.getElementById('modal-hs16').value),
+                high_speed_18kmh_m: toInt(document.getElementById('modal-hs18').value),
+                high_speed_20kmh_m: toInt(document.getElementById('modal-hs20').value),
+                sprint_24kmh_m: toInt(document.getElementById('modal-sprint').value),
+                acc_decc_count: toInt(document.getElementById('modal-acc').value),
+                high_acc_decc_count: toInt(document.getElementById('modal-high_acc').value),
+                high_metabolic_power_m: toInt(document.getElementById('modal-metabolic').value),
+                notes: document.getElementById('modal-notes').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/activities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    showModalAlert('success', 'Aktivite kaydedildi.');
+                    setTimeout(() => {
+                        closeDataEntryModal();
+                        loadUserProfile();
+                    }, 1500);
+                } else {
+                    showModalAlert('error', resData.error || 'Hata oluştu');
+                }
+            } catch (err) {
+                console.error('Error adding activity:', err);
+                showModalAlert('error', 'Sunucu hatası');
+            }
+        });
+
+        function showModalAlert(type, message) {
+            const container = document.getElementById('modal-alert');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                if (type !== 'success') container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Modal dışına tıklayınca kapat
+        window.onclick = function(event) {
+            const modal = document.getElementById('data-entry-modal');
+            if (event.target === modal) {
+                closeDataEntryModal();
+            }
+        }
+
+        // Team Edit/Delete Functions
+        function editTeam(teamId) {
+            document.getElementById(`team-name-${teamId}`).style.display = 'none';
+            document.getElementById(`team-edit-${teamId}`).style.display = 'block';
+            document.getElementById(`team-edit-btn-${teamId}`).style.display = 'none';
+            document.getElementById(`team-save-btn-${teamId}`).style.display = 'inline-block';
+            document.getElementById(`team-cancel-btn-${teamId}`).style.display = 'inline-block';
+        }
+
+        function cancelEditTeam(teamId) {
+            document.getElementById(`team-name-${teamId}`).style.display = 'block';
+            document.getElementById(`team-edit-${teamId}`).style.display = 'none';
+            document.getElementById(`team-edit-btn-${teamId}`).style.display = 'inline-block';
+            document.getElementById(`team-save-btn-${teamId}`).style.display = 'none';
+            document.getElementById(`team-cancel-btn-${teamId}`).style.display = 'none';
+            // Reset input value
+            const originalName = document.getElementById(`team-name-${teamId}`).textContent;
+            document.getElementById(`team-edit-${teamId}`).value = originalName;
+        }
+
+        async function saveTeam(teamId) {
+            const newName = document.getElementById(`team-edit-${teamId}`).value.trim();
+            if (!newName) {
+                showAlert('team-alert', 'error', 'Takım adı boş olamaz');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/teams/${teamId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('team-alert', 'success', data.message);
+                    document.getElementById(`team-name-${teamId}`).textContent = newName;
+                    cancelEditTeam(teamId);
+                    loadTeams(); // Refresh team list
+                    loadTeamManagementDropdown();
+                } else {
+                    showAlert('team-alert', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Team update error:', error);
+                showAlert('team-alert', 'error', 'Güncelleme hatası');
+            }
+        }
+
+        async function deleteTeam(teamId, teamName) {
+            try {
+                // Get delete stats first
+                const statsResponse = await fetch(`/api/teams/${teamId}/stats`);
+                const stats = await statsResponse.json();
+                
+                if (!statsResponse.ok) {
+                    showAlert('team-alert', 'error', stats.error);
+                    return;
+                }
+                
+                const message = `"${teamName}" takımını silmek istediğinizden emin misiniz?\\n\\n${stats.player_count} oyuncu ve ${stats.activity_count} aktivite verisi kalıcı olarak silinecek.`;
+                
+                if (confirm(message)) {
+                    const response = await fetch(`/api/teams/${teamId}`, { method: 'DELETE' });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert('team-alert', 'success', data.message);
+                        loadTeams();
+                        loadTeamsTable();
+                        loadTeamManagementDropdown();
+                        // Clear current team if deleted
+                        if (currentTeamId == teamId) {
+                            currentTeamId = null;
+                            localStorage.removeItem('selectedTeamId');
+                            handlePlayerTeamChange();
+                        }
+                        // Clear team management selection if deleted
+                        if (selectedTeamForManagement == teamId) {
+                            selectedTeamForManagement = null;
+                            document.getElementById('team-management-select').value = '';
+                            document.getElementById('player-management-section').style.display = 'none';
+                        }
+                    } else {
+                        showAlert('team-alert', 'error', data.error);
+                    }
+                }
+            } catch (error) {
+                console.error('Team delete error:', error);
+                showAlert('team-alert', 'error', 'Silme hatası');
+            }
+        }
+
+        // Player Edit/Delete Functions
+        function editPlayer(playerId) {
+            openPlayerModal(playerId);
+        }
+
+
+        async function deletePlayer(playerId, playerName) {
+            try {
+                // Get delete stats first
+                const statsResponse = await fetch(`/api/players/${playerId}/stats`);
+                const stats = await statsResponse.json();
+                
+                if (!statsResponse.ok) {
+                    showAlert('player-alert', 'error', stats.error);
+                    return;
+                }
+                
+                const message = `"${playerName}" oyuncusunu silmek istediğinizden emin misiniz?\\n\\n${stats.activity_count} aktivite verisi kalıcı olarak silinecek.`;
+                
+                if (confirm(message)) {
+                    const response = await fetch(`/api/players/${playerId}`, { method: 'DELETE' });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert('player-alert', 'success', data.message);
+                        loadPlayers();
+                        loadUserProfile();
+                    } else {
+                        showAlert('player-alert', 'error', data.error);
+                    }
+                }
+            } catch (error) {
+                console.error('Player delete error:', error);
+                showAlert('player-alert', 'error', 'Silme hatası');
+            }
+        }
+
+        // Team Management Functions
+        let selectedTeamForManagement = null;
+
+        function handleTeamManagementChange() {
+            const teamSelect = document.getElementById('team-management-select');
+            selectedTeamForManagement = teamSelect.value;
+            
+            if (selectedTeamForManagement) {
+                document.getElementById('player-management-section').style.display = 'block';
+                loadTeamPlayers(selectedTeamForManagement);
+            } else {
+                document.getElementById('player-management-section').style.display = 'none';
+            }
+        }
+
+        function loadTeamManagementDropdown() {
+            const teamSelect = document.getElementById('team-management-select');
+            teamSelect.innerHTML = '<option value="">Takım seçiniz</option>';
+            teams.forEach(team => {
+                teamSelect.add(new Option(team.name, team.id));
+            });
+        }
+
+        async function loadTeamPlayers(teamId) {
+            try {
+                const response = await fetch(`/api/players?team_id=${teamId}`);
+                const players = await response.json();
+                displayPlayerCards(players);
+            } catch (error) {
+                console.error('Error loading team players:', error);
+            }
+        }
+
+        function displayPlayerCards(players) {
+            const grid = document.getElementById('players-grid');
+            grid.innerHTML = '';
+            
+            if (players.length === 0) {
+                grid.innerHTML = '<div class="loading" style="grid-column: 1/-1;">Bu takımda henüz oyuncu yok. Oyuncu eklemek için yukarıdaki butonu kullanın.</div>';
+                return;
+            }
+            
+            players.forEach(player => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => viewPlayerDetails(player);
+                
+                const age = player.birth_date ? calculateAge(player.birth_date) : '-';
+                const height = player.height_cm ? `${player.height_cm}cm` : '-';
+                const position = player.primary_position || player.position || '-';
+                const jersey = player.jersey_number ? `#${player.jersey_number}` : '';
+                
+                // Handle both new schema (first_name/last_name) and old schema (name)
+                const firstName = player.first_name || '';
+                const lastName = player.last_name || '';
+                const fullName = player.name || `${firstName} ${lastName}`.trim() || 'İsimsiz Oyuncu';
+                
+                card.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #0d6efd; margin-bottom: 5px;">
+                            ${jersey} ${fullName}
+                        </div>
+                        <div style="color: #666; margin-bottom: 10px;">${position}</div>
+                        <div style="font-size: 0.9rem; color: #888;">
+                            Yaş: ${age} | Boy: ${height}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-sm" onclick="event.stopPropagation(); editPlayer(${player.id})" style="margin-right: 5px;">Düzenle</button>
+                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deletePlayer(${player.id}, '${fullName}')">Sil</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function viewPlayerDetails(player) {
+            alert(`${player.first_name} ${player.last_name} detay sayfası henüz hazır değil.`);
+        }
+
+        // Player Modal Functions
+        let editingPlayerId = null;
+
+        function openPlayerModal(playerId = null) {
+            editingPlayerId = playerId;
+            const modal = document.getElementById('player-modal');
+            const form = document.getElementById('player-detail-form');
+            
+            if (playerId) {
+                document.getElementById('player-modal-title').textContent = 'Oyuncu Düzenle';
+                // Load player data for editing
+                loadPlayerForEdit(playerId);
+            } else {
+                document.getElementById('player-modal-title').textContent = 'Yeni Oyuncu Ekle';
+                form.reset();
+            }
+            
+            modal.style.display = 'block';
+            document.getElementById('player-modal-alert').innerHTML = '';
+        }
+
+        function closePlayerModal() {
+            document.getElementById('player-modal').style.display = 'none';
+            editingPlayerId = null;
+        }
+
+        async function loadPlayerForEdit(playerId) {
+            try {
+                const response = await fetch(`/api/players?team_id=${selectedTeamForManagement}`);
+                const players = await response.json();
+                const player = players.find(p => p.id === playerId);
+                
+                if (player) {
+                    document.getElementById('player-first-name').value = player.first_name || '';
+                    document.getElementById('player-last-name').value = player.last_name || '';
+                    document.getElementById('player-birth-date').value = player.birth_date || '';
+                    document.getElementById('player-nationality').value = player.nationality || '';
+                    document.getElementById('player-primary-position').value = player.primary_position || '';
+                    document.getElementById('player-secondary-positions').value = player.secondary_positions || '';
+                    document.getElementById('player-preferred-foot').value = player.preferred_foot || '';
+                    document.getElementById('player-jersey-number').value = player.jersey_number || '';
+                    document.getElementById('player-height').value = player.height_cm || '';
+                    document.getElementById('player-weight').value = player.weight_kg || '';
+                    document.getElementById('player-previous-club').value = player.previous_club || '';
+                    document.getElementById('player-blood-type').value = player.blood_type || '';
+                    document.getElementById('player-phone').value = player.phone || '';
+                    document.getElementById('player-email').value = player.email || '';
+                    document.getElementById('player-emergency-contact').value = player.emergency_contact || '';
+                    document.getElementById('player-notes').value = player.notes || '';
+                }
+            } catch (error) {
+                console.error('Error loading player for edit:', error);
+            }
+        }
+
+        // Player Form Handler
+        document.getElementById('player-detail-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!selectedTeamForManagement) {
+                showAlert('team-alert', 'error', 'Önce bir takım seçmelisiniz.');
+                return;
+            }
+            
+            const formData = {
+                first_name: document.getElementById('player-first-name').value,
+                last_name: document.getElementById('player-last-name').value,
+                birth_date: document.getElementById('player-birth-date').value,
+                nationality: document.getElementById('player-nationality').value,
+                primary_position: document.getElementById('player-primary-position').value,
+                secondary_positions: document.getElementById('player-secondary-positions').value,
+                preferred_foot: document.getElementById('player-preferred-foot').value,
+                jersey_number: document.getElementById('player-jersey-number').value || null,
+                height_cm: document.getElementById('player-height').value || null,
+                weight_kg: document.getElementById('player-weight').value || null,
+                previous_club: document.getElementById('player-previous-club').value,
+                blood_type: document.getElementById('player-blood-type').value,
+                phone: document.getElementById('player-phone').value,
+                email: document.getElementById('player-email').value,
+                emergency_contact: document.getElementById('player-emergency-contact').value,
+                notes: document.getElementById('player-notes').value,
+                team_id: selectedTeamForManagement
+            };
+            
+            try {
+                let response;
+                if (editingPlayerId) {
+                    response = await fetch(`/api/players/${editingPlayerId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    response = await fetch('/api/players', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                }
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showModalAlert('player-modal-alert', 'success', editingPlayerId ? 'Oyuncu güncellendi.' : 'Oyuncu eklendi.');
+                    setTimeout(() => {
+                        closePlayerModal();
+                        loadTeamPlayers(selectedTeamForManagement);
+                        loadUserProfile();
+                        loadTeamsTable();
+                    }, 1500);
+                } else {
+                    showModalAlert('player-modal-alert', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Error saving player:', error);
+                showModalAlert('player-modal-alert', 'error', 'Kaydetme hatası');
+            }
+        });
+
+        function showModalAlert(containerId, type, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                if (type !== 'success') container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Profile Edit Functions
+        function toggleProfileEdit() {
+            const displays = ['profile-username-display', 'profile-email-display'];
+            const inputs = ['profile-username-edit', 'profile-email-edit'];
+            const isEditing = document.getElementById('profile-username-edit').style.display !== 'none';
+            
+            if (isEditing) {
+                // Cancel edit
+                displays.forEach(id => document.getElementById(id).style.display = 'inline');
+                inputs.forEach(id => document.getElementById(id).style.display = 'none');
+                document.getElementById('profile-edit-buttons').style.display = 'none';
+                document.getElementById('profile-edit-toggle').textContent = 'Düzenle';
+            } else {
+                // Start edit
+                displays.forEach(id => document.getElementById(id).style.display = 'none');
+                inputs.forEach(id => document.getElementById(id).style.display = 'block');
+                document.getElementById('profile-edit-buttons').style.display = 'block';
+                document.getElementById('profile-edit-toggle').textContent = 'İptal';
+                
+                // Fill edit fields with current values
+                document.getElementById('profile-username-edit').value = document.getElementById('profile-username-display').textContent;
+                document.getElementById('profile-email-edit').value = document.getElementById('profile-email-display').textContent;
+            }
+        }
+
+        function cancelProfileEdit() {
+            toggleProfileEdit();
+        }
+
+        async function saveProfile() {
+            const username = document.getElementById('profile-username-edit').value;
+            const email = document.getElementById('profile-email-edit').value;
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('profile-alert', 'success', data.message);
+                    document.getElementById('profile-username-display').textContent = username;
+                    document.getElementById('profile-email-display').textContent = email;
+                    document.getElementById('user-info').textContent = `Hoşgeldin, ${username}`;
+                    document.getElementById('welcome-username').textContent = username;
+                    toggleProfileEdit();
+                } else {
+                    showAlert('profile-alert', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showAlert('profile-alert', 'error', 'Profil güncelleme hatası');
+            }
+        }
+
+        function togglePasswordEdit() {
+            const form = document.getElementById('password-edit-form');
+            const isVisible = form.style.display !== 'none';
+            
+            if (isVisible) {
+                form.style.display = 'none';
+                document.getElementById('password-edit-toggle').textContent = 'Şifre Değiştir';
+                form.querySelectorAll('input').forEach(input => input.value = '');
+            } else {
+                form.style.display = 'block';
+                document.getElementById('password-edit-toggle').textContent = 'İptal';
+            }
+        }
+
+        function cancelPasswordEdit() {
+            togglePasswordEdit();
+        }
+
+        async function savePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('profile-alert', 'error', 'Yeni şifreler eşleşmiyor');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('profile-alert', 'success', data.message);
+                    togglePasswordEdit();
+                } else {
+                    showAlert('profile-alert', 'error', data.error);
+                }
+            } catch (error) {
+                console.error('Password change error:', error);
+                showAlert('profile-alert', 'error', 'Şifre değiştirme hatası');
             }
         }
 
