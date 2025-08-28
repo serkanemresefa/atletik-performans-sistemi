@@ -169,7 +169,7 @@ Bu proje MIT lisansı altında geliştirilmiştir.
 
 ---
 
-**Geliştirici:** Alper - Atletik Performans Antrenörü  
-**Teknoloji Partner:** Claude AI  
+**Geliştirici:** bukaa21  
+**Teknoloji Partner:** bukaa21 AI  
 **Versiyon:** 1.0  
 **Son Güncelleme:** Ağustos 2025
