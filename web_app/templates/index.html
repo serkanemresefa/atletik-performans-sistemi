@@ -44,18 +44,24 @@
     <div class="container">
         <div class="header">
             <h1>⚽ Atletik Performans Takip Sistemi</h1>
-            <div class="team-selector-container">
-                <label for="team-select" style="font-weight: 500;">Takım Seç:</label>
-                <select id="team-select" class="form-control" onchange="handleTeamChange()"></select>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div class="team-selector-container">
+                    <label for="team-select" style="font-weight: 500;">Takım Seç:</label>
+                    <select id="team-select" class="form-control" onchange="handleTeamChange()" style="min-width: 200px;"></select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="user-info" style="color: #4a5568; font-weight: 500;"></span>
+                    <button onclick="logout()" class="btn" style="padding: 8px 16px; font-size: 14px;">🚪 Çıkış</button>
+                </div>
             </div>
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('team-dashboard')">🏆 Takım</button>
+            <button class="nav-tab active" onclick="showTab('team-dashboard')">🏆 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('team-management')">🛠️ Takım Yönetimi</button>
             <button class="nav-tab" onclick="showTab('players')">👥 Oyuncular</button>
             <button class="nav-tab" onclick="showTab('data-entry')">➕ Veri Girişi</button>
             <button class="nav-tab" onclick="showTab('analysis')">📈 Analiz</button>
-            <button class="nav-tab" onclick="showTab('team-management')">🛠️ Takım Yönetimi</button>
         </div>
 
         <!-- Team Dashboard Tab -->
@@ -100,7 +106,53 @@
                     <div class="form-group"><label for="activity-date">Tarih</label><input type="date" id="activity-date" class="form-control" required></div>
                     <div class="form-group"><label for="activity-type">Aktivite Türü</label><select id="activity-type" class="form-control" required><option value="">Seçin...</option><option value="training">Antrenman</option><option value="match">Maç</option></select></div>
                 </div>
-                <!-- Other form fields... -->
+                <!-- Ek veri giriş alanları -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration">Süre (dk)</label>
+                        <input type="number" id="duration" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="distance">Toplam Mesafe (m)</label>
+                        <input type="number" id="distance" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="hs16">16+ km/h Mesafe (m)</label>
+                        <input type="number" id="hs16" class="form-control" min="0" step="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hs18">18+ km/h Mesafe (m)</label>
+                        <input type="number" id="hs18" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="hs20">20+ km/h Mesafe (m)</label>
+                        <input type="number" id="hs20" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="sprint">24+ km/h Sprint Mesafe (m)</label>
+                        <input type="number" id="sprint" class="form-control" min="0" step="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="acc">İvmelenme/Decc Sayısı</label>
+                        <input type="number" id="acc" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="high_acc">Yüksek İvmelenme Sayısı</label>
+                        <input type="number" id="high_acc" class="form-control" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="metabolic">Metabolik Güç Mesafesi (m)</label>
+                        <input type="number" id="metabolic" class="form-control" min="0" step="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notlar</label>
+                    <textarea id="notes" class="form-control" rows="2"></textarea>
+                </div>
                 <button type="submit" class="btn btn-success">💾 Kaydet</button>
             </form>
         </div>
@@ -108,15 +160,16 @@
         <!-- Analysis Tab -->
         <div id="analysis" class="tab-content">
             <h2>📈 Performans Analizi</h2>
+            <div id="analysis-alert"></div>
             <div class="form-row">
-                <div class="form-group"><label for="analysis-players">Oyuncular (Ctrl+Click)</label><select id="analysis-players" class="form-control" multiple size="5"></select></div>
-                <div class="form-group"><label for="start-date">Başlangıç</label><input type="date" id="start-date" class="form-control"></div>
-                <div class="form-group"><label for="end-date">Bitiş</label><input type="date" id="end-date" class="form-control"></div>
+                <div class="form-group"><label for="analysis-players">Oyuncular (Ctrl+Click çoklu seçim)</label><select id="analysis-players" class="form-control" multiple size="5"></select></div>
+                <div class="form-group"><label for="start-date">Başlangıç Tarihi</label><input type="date" id="start-date" class="form-control"></div>
+                <div class="form-group"><label for="end-date">Bitiş Tarihi</label><input type="date" id="end-date" class="form-control"></div>
             </div>
             <button onclick="runAnalysis()" class="btn">🔄 Analiz Yap</button>
             <div id="analysis-results" style="display: none;">
                 <div class="chart-container"><canvas id="analysis-chart"></canvas></div>
-                <div class="table-container"><h3>📋 Detaylı Sonuçlar</h3><table class="table"><thead><tr><th>Oyuncu</th><th>Ant.</th><th>Maç</th><th>Mesafe %</th><th>HS16 %</th><th>HS20 %</th><th>Sprint %</th></tr></thead><tbody id="analysis-table"></tbody></table></div>
+                <div class="table-container"><h3>📋 Detaylı Sonuçlar</h3><table class="table"><thead><tr><th>Oyuncu</th><th>Ant. Ort.</th><th>Maç Ort.</th><th>Mesafe %</th><th>HS16 %</th><th>HS20 %</th><th>Sprint %</th></tr></thead><tbody id="analysis-table"></tbody></table></div>
             </div>
         </div>
 
@@ -142,14 +195,39 @@
         let teams = [];
         let players = [];
         let analysisChart = null;
+        let currentUser = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadTeams();
+            checkAuth();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('activity-date').value = today;
             document.getElementById('start-date').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
             document.getElementById('end-date').value = today;
         });
+
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/teams');
+                if (response.status === 401) {
+                    window.location.href = '/';
+                    return;
+                }
+                loadTeams();
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/';
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/';
+            }
+        }
 
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -157,6 +235,25 @@
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
             if(tabName === 'team-management') loadTeamsTable();
+            
+            // Tab değişikliklerinde uyarıları göster
+            const tabMessages = {
+                'team-management': currentTeamId ? '' : 'Önce bir takım oluşturun veya seçin.',
+                'players': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : '',
+                'data-entry': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : (players.length === 0 ? 'Bu takımda oyuncu yok. Önce oyuncu ekleyin.' : ''),
+                'analysis': !currentTeamId ? 'Önce bir takım seçmelisiniz.' : (players.length === 0 ? 'Bu takımda oyuncu yok. Analiz için oyuncu gerekli.' : '')
+            };
+            
+            const message = tabMessages[tabName];
+            if (message) {
+                const alertIds = {
+                    'team-management': 'team-alert',
+                    'players': 'player-alert', 
+                    'data-entry': 'data-entry-alert',
+                    'analysis': 'analysis-alert'
+                };
+                setTimeout(() => showAlert(alertIds[tabName] || 'team-alert', 'error', message), 100);
+            }
         }
 
         function showAlert(containerId, type, message) {
@@ -168,33 +265,69 @@
         async function loadTeams() {
             try {
                 const response = await fetch('/api/teams');
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error('Teams yüklenemedi');
+                }
                 teams = await response.json();
                 const teamSelect = document.getElementById('team-select');
                 teamSelect.innerHTML = '';
+                
                 if (teams.length > 0) {
+                    teamSelect.innerHTML = '<option value="">Takım seçin...</option>';
                     teams.forEach(team => {
                         const option = new Option(team.name, team.id);
                         teamSelect.add(option);
                     });
-                    currentTeamId = teams[0].id;
-                    localStorage.setItem('selectedTeamId', currentTeamId);
+                    
+                    // Önceki seçimi geri yükle
+                    const savedTeamId = localStorage.getItem('selectedTeamId');
+                    if (savedTeamId && teams.find(t => t.id == savedTeamId)) {
+                        teamSelect.value = savedTeamId;
+                        currentTeamId = savedTeamId;
+                    }
                 } else {
-                    teamSelect.innerHTML = '<option>Önce takım ekleyin</option>';
+                    teamSelect.innerHTML = '<option value="">Önce takım oluşturun</option>';
                     showTab('team-management');
+                    showAlert('team-alert', 'success', 'Hoşgeldiniz! Lütfen önce bir takım oluşturun.');
                 }
+                
                 handleTeamChange();
             } catch (error) {
                 console.error('Error loading teams:', error);
+                showAlert('team-alert', 'error', 'Takımlar yüklenirken hata oluştu.');
             }
         }
 
         function handleTeamChange() {
             const teamSelect = document.getElementById('team-select');
             currentTeamId = teamSelect.value;
-            localStorage.setItem('selectedTeamId', currentTeamId);
+            
             if (currentTeamId) {
+                localStorage.setItem('selectedTeamId', currentTeamId);
                 loadDashboardData();
                 loadPlayers();
+                
+                // Seçili takım adını göster
+                const selectedTeam = teams.find(t => t.id == currentTeamId);
+                if (selectedTeam) {
+                    document.getElementById('dashboard-title').textContent = `🏆 ${selectedTeam.name} - Performans Özeti`;
+                }
+            } else {
+                // Takım seçilmediğinde verileri temizle
+                document.getElementById('dashboard-title').textContent = '🏆 Takım Performans Özeti';
+                document.getElementById('total-players').textContent = '-';
+                document.getElementById('total-activities').textContent = '-';
+                document.getElementById('total-trainings').textContent = '-';
+                document.getElementById('total-matches').textContent = '-';
+                document.getElementById('recent-activities').innerHTML = '<tr><td colspan="5" class="loading">Takım seçiniz</td></tr>';
+                
+                players = [];
+                updatePlayerDropdowns();
+                loadPlayersTable();
             }
         }
 
@@ -202,22 +335,31 @@
             if (!currentTeamId) return;
             try {
                 const response = await fetch(`/api/dashboard-stats?team_id=${currentTeamId}`);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error('Dashboard verileri yüklenemedi');
+                }
                 const data = await response.json();
                 document.getElementById('total-players').textContent = data.players_count;
                 document.getElementById('total-activities').textContent = data.activities_count;
                 document.getElementById('total-trainings').textContent = data.training_count;
                 document.getElementById('total-matches').textContent = data.match_count;
+                
                 const tbody = document.getElementById('recent-activities');
                 tbody.innerHTML = '';
                 if (data.recent_activities.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="loading">Veri yok.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">Henüz aktivite kaydı yok.</td></tr>';
                 } else {
                     data.recent_activities.forEach(act => {
-                        tbody.innerHTML += `<tr><td>${act.date}</td><td>${act.player_name}</td><td>${act.activity_type === 'training' ? 'Antrenman' : 'Maç'}</td><td>${act.total_distance_m || '-'}</td><td>${act.duration_minutes || '-'}</td></tr>`;
+                        tbody.innerHTML += `<tr><td>${act.date}</td><td>${act.player_name}</td><td>${act.activity_type === 'training' ? '🏃 Antrenman' : '⚽ Maç'}</td><td>${act.total_distance_m || '-'}</td><td>${act.duration_minutes || '-'}</td></tr>`;
                     });
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                showAlert('team-alert', 'error', 'Dashboard verileri yüklenirken hata oluştu.');
             }
         }
 
@@ -317,8 +459,161 @@
                 });
             }
         }
-        
-        // Placeholder for other forms and analysis logic
+
+        // Veri girişi formunu işle
+        document.getElementById('activity-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            if (!currentTeamId) {
+                showAlert('data-entry-alert', 'error', 'Önce bir takım seçmelisiniz.');
+                return;
+            }
+            const playerId = document.getElementById('player-select').value;
+            const date = document.getElementById('activity-date').value;
+            const activityType = document.getElementById('activity-type').value;
+            if (!playerId || !date || !activityType) {
+                showAlert('data-entry-alert', 'error', 'Lütfen zorunlu alanları doldurun.');
+                return;
+            }
+            // Topla diğer alanları; boşsa null olsun
+            const toInt = v => {
+                const parsed = parseInt(v, 10);
+                return isNaN(parsed) ? null : parsed;
+            };
+            const data = {
+                player_id: parseInt(playerId, 10),
+                date: date,
+                activity_type: activityType,
+                duration_minutes: toInt(document.getElementById('duration').value),
+                total_distance_m: toInt(document.getElementById('distance').value),
+                high_speed_16kmh_m: toInt(document.getElementById('hs16').value),
+                high_speed_18kmh_m: toInt(document.getElementById('hs18').value),
+                high_speed_20kmh_m: toInt(document.getElementById('hs20').value),
+                sprint_24kmh_m: toInt(document.getElementById('sprint').value),
+                acc_decc_count: toInt(document.getElementById('acc').value),
+                high_acc_decc_count: toInt(document.getElementById('high_acc').value),
+                high_metabolic_power_m: toInt(document.getElementById('metabolic').value),
+                notes: document.getElementById('notes').value || null
+            };
+            try {
+                const response = await fetch('/api/activities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    showAlert('data-entry-alert', 'success', 'Aktivite kaydedildi.');
+                    e.target.reset();
+                    // Tarih alanını tekrar bugüne ayarla
+                    document.getElementById('activity-date').value = new Date().toISOString().split('T')[0];
+                    loadDashboardData();
+                } else {
+                    showAlert('data-entry-alert', 'error', resData.error || 'Hata oluştu');
+                }
+            } catch (err) {
+                console.error('Error adding activity:', err);
+                showAlert('data-entry-alert', 'error', 'Sunucu hatası');
+            }
+        });
+
+        // Analiz fonksiyonu
+        async function runAnalysis() {
+            if (!currentTeamId) {
+                showAlert('analysis-alert', 'error', 'Önce bir takım seçmelisiniz.');
+                return;
+            }
+            
+            const select = document.getElementById('analysis-players');
+            const selectedIds = Array.from(select.selectedOptions).map(o => o.value);
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+            
+            if (selectedIds.length === 0) {
+                showAlert('analysis-alert', 'error', 'Lütfen analiz için en az bir oyuncu seçiniz.');
+                return;
+            }
+            if (!start || !end) {
+                showAlert('analysis-alert', 'error', 'Lütfen başlangıç ve bitiş tarihlerini seçiniz.');
+                return;
+            }
+            if (new Date(start) > new Date(end)) {
+                showAlert('analysis-alert', 'error', 'Başlangıç tarihi bitiş tarihinden sonra olamaz.');
+                return;
+            }
+            try {
+                const response = await fetch('/api/analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_ids: selectedIds, start_date: start, end_date: end })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    showAlert('analysis-alert', 'error', result.error || 'Analiz hatası');
+                    return;
+                }
+                
+                if (result.players.length === 0) {
+                    showAlert('analysis-alert', 'error', 'Seçilen tarih aralığında veri bulunamadı.');
+                    return;
+                }
+                // Tabloyu doldur
+                const tbody = document.getElementById('analysis-table');
+                tbody.innerHTML = '';
+                const labels = [];
+                const distanceData = [];
+                const hs16Data = [];
+                const hs20Data = [];
+                const sprintData = [];
+                result.players.forEach(item => {
+                    labels.push(item.player_name);
+                    const tDist = item.training.total_distance;
+                    const mDist = item.match.total_distance;
+                    const pctDist = item.ratios.distance_pct !== null ? item.ratios.distance_pct.toFixed(0) : '-';
+                    const pct16 = item.ratios.hs16_pct !== null ? item.ratios.hs16_pct.toFixed(0) : '-';
+                    const pct20 = item.ratios.hs20_pct !== null ? item.ratios.hs20_pct.toFixed(0) : '-';
+                    const pctSprint = item.ratios.sprint_pct !== null ? item.ratios.sprint_pct.toFixed(0) : '-';
+                    distanceData.push(item.ratios.distance_pct ?? 0);
+                    hs16Data.push(item.ratios.hs16_pct ?? 0);
+                    hs20Data.push(item.ratios.hs20_pct ?? 0);
+                    sprintData.push(item.ratios.sprint_pct ?? 0);
+                    const tDistDisplay = tDist !== null && tDist !== undefined ? Number(tDist).toFixed(0) : '-';
+                    const mDistDisplay = mDist !== null && mDist !== undefined ? Number(mDist).toFixed(0) : '-';
+                    tbody.innerHTML += `<tr><td>${item.player_name}</td><td>${tDistDisplay}</td><td>${mDistDisplay}</td><td>${pctDist}</td><td>${pct16}</td><td>${pct20}</td><td>${pctSprint}</td></tr>`;
+                });
+                document.getElementById('analysis-results').style.display = 'block';
+                // Grafik
+                const ctx = document.getElementById('analysis-chart').getContext('2d');
+                if (analysisChart) analysisChart.destroy();
+                analysisChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Mesafe %', data: distanceData, backgroundColor: 'rgba(75, 192, 192, 0.6)' },
+                            { label: 'HS16 %', data: hs16Data, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                            { label: 'HS20 %', data: hs20Data, backgroundColor: 'rgba(255, 206, 86, 0.6)' },
+                            { label: 'Sprint %', data: sprintData, backgroundColor: 'rgba(255, 99, 132, 0.6)' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '%' }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Analysis error:', err);
+                showAlert('analysis-alert', 'error', 'Analiz sırasında hata oluştu.');
+            }
+        }
 
     </script>
 </body>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ Atletik Performans Sistemi - Giriş</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            color: #333;
+        }
+        .auth-container { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 40px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 400px;
+        }
+        .logo { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            font-size: 1.5rem; 
+            color: #4a5568;
+        }
+        .auth-tabs {
+            display: flex;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 30px;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 500; 
+            color: #4a5568; 
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            transition: border-color 0.3s ease; 
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: #667eea; 
+        }
+        .btn { 
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            font-size: 16px;
+            transition: transform 0.2s ease; 
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+            transform: none; 
+        }
+        .alert { 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            text-align: center;
+        }
+        .alert-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .alert-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .demo-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+        .demo-info strong { display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>⚽ Atletik Performans Sistemi</h1>
+            <p style="font-size: 14px; color: #718096; margin-top: 10px;">Futbol performans takip platformu</p>
+        </div>
+
+        <div class="demo-info">
+            <strong>🎯 Demo Hesabı:</strong>
+            <strong>Kullanıcı:</strong> demo<br>
+            <strong>Şifre:</strong> demo123
+        </div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">Giriş Yap</button>
+            <button class="auth-tab" onclick="switchTab('register')">Kayıt Ol</button>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Giriş Formu -->
+        <form id="login-form" class="auth-form active">
+            <div class="form-group">
+                <label for="login-username">Kullanıcı Adı</label>
+                <input type="text" id="login-username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Şifre</label>
+                <input type="password" id="login-password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn" id="login-btn">🚀 Giriş Yap</button>
+        </form>
+
+        <!-- Kayıt Formu -->
+        <form id="register-form" class="auth-form">
+            <div class="form-group">
+                <label for="register-username">Kullanıcı Adı</label>
+                <input type="text" id="register-username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="register-email">E-posta</label>
+                <input type="email" id="register-email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Şifre (en az 6 karakter)</label>
+                <input type="password" id="register-password" class="form-control" required minlength="6">
+            </div>
+            <button type="submit" class="btn" id="register-btn">📝 Kayıt Ol</button>
+        </form>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Tab butonlarını güncelle
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Formları göster/gizle
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            document.getElementById(tabName + '-form').classList.add('active');
+
+            // Alert temizle
+            document.getElementById('alert-container').innerHTML = '';
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function setButtonLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.textContent = '⏳ İşlem yapılıyor...';
+            } else {
+                btn.disabled = false;
+                btn.textContent = buttonId === 'login-btn' ? '🚀 Giriş Yap' : '📝 Kayıt Ol';
+            }
+        }
+
+        // Giriş formu
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            setButtonLoading('login-btn', true);
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', data.message);
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showAlert('error', data.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Bağlantı hatası. Lütfen tekrar deneyin.');
+                console.error('Login error:', error);
+            } finally {
+                setButtonLoading('login-btn', false);
+            }
+        });
+
+        // Kayıt formu
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            setButtonLoading('register-btn', true);
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', data.message);
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showAlert('error', data.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Bağlantı hatası. Lütfen tekrar deneyin.');
+                console.error('Register error:', error);
+            } finally {
+                setButtonLoading('register-btn', false);
+            }
+        });
+
+        // Demo hesabı otomatik doldurma
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-username').value = 'demo';
+            document.getElementById('login-password').value = 'demo123';
+        });
+    </script>
+</body>
+</html>
