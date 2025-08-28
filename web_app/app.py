@@ -19,6 +19,15 @@ def get_db_connection():
 def init_database():
     conn = get_db_connection()
     
+    # Teams tablosu
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
     # Players tablosu
     conn.execute('''
     CREATE TABLE IF NOT EXISTS players (
@@ -26,7 +35,9 @@ def init_database():
         name TEXT NOT NULL,
         position TEXT,
         birth_date DATE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        team_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (team_id) REFERENCES teams (id)
     )
     ''')
     
@@ -53,8 +64,11 @@ def init_database():
     ''')
     
     # Örnek veri ekle (eğer yoksa)
-    existing_players = conn.execute("SELECT COUNT(*) as count FROM players").fetchone()
-    if existing_players['count'] == 0:
+    existing_teams = conn.execute("SELECT COUNT(*) as count FROM teams").fetchone()['count']
+    if existing_teams == 0:
+        cursor = conn.execute("INSERT INTO teams (name) VALUES (?)", ('U17 Milli Takım',))
+        team_id = cursor.lastrowid
+        
         sample_players = [
             ('Aleyna Can', 'Forward'),
             ('Berra Pekgöz', 'Midfielder'),
@@ -63,8 +77,8 @@ def init_database():
             ('Elif Ceren Mutlu', 'Midfielder')
         ]
         for name, position in sample_players:
-            conn.execute("INSERT INTO players (name, position) VALUES (?, ?)", (name, position))
-    
+            conn.execute("INSERT INTO players (name, position, team_id) VALUES (?, ?, ?)", (name, position, team_id))
+
     conn.commit()
     conn.close()
 
@@ -75,10 +89,40 @@ def index():
 
 # API Endpoints
 
+@app.route('/api/teams', methods=['GET'])
+def get_teams():
+    conn = get_db_connection()
+    teams = conn.execute('SELECT * FROM teams ORDER BY name').fetchall()
+    conn.close()
+    return jsonify([dict(row) for row in teams])
+
+@app.route('/api/teams', methods=['POST'])
+def add_team():
+    data = request.json
+    name = data.get('name')
+    
+    if not name:
+        return jsonify({'error': 'Team name is required'}), 400
+    
+    conn = get_db_connection()
+    try:
+        cursor = conn.execute('INSERT INTO teams (name) VALUES (?)', (name,))
+        team_id = cursor.lastrowid
+        conn.commit()
+        return jsonify({'id': team_id, 'name': name})
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Team name already exists'}), 409
+    finally:
+        conn.close()
+
 @app.route('/api/players', methods=['GET'])
 def get_players():
+    team_id = request.args.get('team_id')
+    if not team_id:
+        return jsonify({'error': 'team_id is required'}), 400
+        
     conn = get_db_connection()
-    players = conn.execute('SELECT * FROM players ORDER BY name').fetchall()
+    players = conn.execute('SELECT * FROM players WHERE team_id = ? ORDER BY name', (team_id,)).fetchall()
     conn.close()
     return jsonify([dict(row) for row in players])
 
@@ -87,23 +131,24 @@ def add_player():
     data = request.json
     name = data.get('name')
     position = data.get('position', '')
+    team_id = data.get('team_id')
     
-    if not name:
-        return jsonify({'error': 'Name is required'}), 400
+    if not name or not team_id:
+        return jsonify({'error': 'Name and team_id are required'}), 400
     
     conn = get_db_connection()
-    cursor = conn.execute('INSERT INTO players (name, position) VALUES (?, ?)', (name, position))
+    cursor = conn.execute('INSERT INTO players (name, position, team_id) VALUES (?, ?, ?)', (name, position, team_id))
     player_id = cursor.lastrowid
     conn.commit()
     conn.close()
     
-    return jsonify({'id': player_id, 'name': name, 'position': position})
+    return jsonify({'id': player_id, 'name': name, 'position': position, 'team_id': team_id})
 
 @app.route('/api/activities', methods=['GET'])
 def get_activities():
-    player_id = request.args.get('player_id')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    team_id = request.args.get('team_id')
+    # Diğer filtreler (player_id, start_date, end_date) frontend'den yönetilecek
+    # Bu endpoint şimdilik genel aktivite çekmek için kullanılabilir veya takım bazlı olabilir
     
     conn = get_db_connection()
     
@@ -111,23 +156,14 @@ def get_activities():
     SELECT a.*, p.name as player_name 
     FROM activities a 
     JOIN players p ON a.player_id = p.id 
-    WHERE 1=1
+    WHERE p.team_id = ?
+    ORDER BY a.date DESC
     '''
-    params = []
     
-    if player_id:
-        query += ' AND a.player_id = ?'
-        params.append(player_id)
-    if start_date:
-        query += ' AND a.date >= ?'
-        params.append(start_date)
-    if end_date:
-        query += ' AND a.date <= ?'
-        params.append(end_date)
-        
-    query += ' ORDER BY a.date DESC'
-    
-    activities = conn.execute(query, params).fetchall()
+    if not team_id:
+        return jsonify({'error': 'team_id is required'}), 400
+
+    activities = conn.execute(query, (team_id,)).fetchall()
     conn.close()
     
     return jsonify([dict(row) for row in activities])
@@ -174,30 +210,33 @@ def get_analysis():
     conn = get_db_connection()
     analysis_data = []
     
+    placeholders = ', '.join('?' for _ in player_ids)
+    
+    # Oyuncu bilgilerini al
+    players_map = {p['id']: p['name'] for p in conn.execute(f'SELECT id, name FROM players WHERE id IN ({placeholders})', player_ids).fetchall()}
+
+    # Aktivite verilerini al
+    query = f'''
+    SELECT * FROM activities 
+    WHERE player_id IN ({placeholders}) AND date >= ? AND date <= ?
+    '''
+    activities = conn.execute(query, (*player_ids, start_date, end_date)).fetchall()
+    
     for player_id in player_ids:
-        # Oyuncu bilgisini al
-        player = conn.execute('SELECT name FROM players WHERE id = ?', (player_id,)).fetchone()
-        if not player:
+        player_name = players_map.get(player_id)
+        if not player_name:
             continue
             
-        # Aktivite verilerini al
-        query = '''
-        SELECT * FROM activities 
-        WHERE player_id = ? AND date >= ? AND date <= ?
-        '''
-        activities = conn.execute(query, (player_id, start_date, end_date)).fetchall()
-        
-        if not activities:
+        player_activities = [a for a in activities if a['player_id'] == player_id]
+        if not player_activities:
             continue
             
-        # Antrenman ve maç verilerini ayır
-        training_data = [a for a in activities if a['activity_type'] == 'training']
-        match_data = [a for a in activities if a['activity_type'] == 'match']
+        training_data = [a for a in player_activities if a['activity_type'] == 'training']
+        match_data = [a for a in player_activities if a['activity_type'] == 'match']
         
         if not training_data or not match_data:
             continue
             
-        # Ortalamalar hesapla
         def avg_metric(data, metric):
             values = [d[metric] for d in data if d[metric] is not None]
             return sum(values) / len(values) if values else 0
@@ -211,7 +250,6 @@ def get_analysis():
         training_avg_sprint = avg_metric(training_data, 'sprint_24kmh_m')
         match_avg_sprint = avg_metric(match_data, 'sprint_24kmh_m')
         
-        # Yüzde hesapla
         distance_ratio = (training_avg_distance / match_avg_distance * 100) if match_avg_distance > 0 else 0
         hs16_ratio = (training_avg_hs16 / match_avg_hs16 * 100) if match_avg_hs16 > 0 else 0
         hs20_ratio = (training_avg_hs20 / match_avg_hs20 * 100) if match_avg_hs20 > 0 else 0
@@ -219,15 +257,13 @@ def get_analysis():
         
         analysis_data.append({
             'player_id': player_id,
-            'player_name': player['name'],
+            'player_name': player_name,
             'training_count': len(training_data),
             'match_count': len(match_data),
             'distance_ratio': round(distance_ratio, 1),
             'hs16_ratio': round(hs16_ratio, 1),
             'hs20_ratio': round(hs20_ratio, 1),
             'sprint_ratio': round(sprint_ratio, 1),
-            'avg_training_distance': round(training_avg_distance, 0),
-            'avg_match_distance': round(match_avg_distance, 0)
         })
     
     conn.close()
@@ -235,34 +271,51 @@ def get_analysis():
 
 @app.route('/api/dashboard-stats')
 def dashboard_stats():
+    team_id = request.args.get('team_id')
+    if not team_id:
+        return jsonify({'error': 'team_id is required'}), 400
+
     conn = get_db_connection()
     
-    # Temel istatistikler
-    players_count = conn.execute('SELECT COUNT(*) as count FROM players').fetchone()['count']
-    activities_count = conn.execute('SELECT COUNT(*) as count FROM activities').fetchone()['count']
-    training_count = conn.execute('SELECT COUNT(*) as count FROM activities WHERE activity_type = "training"').fetchone()['count']
-    match_count = conn.execute('SELECT COUNT(*) as count FROM activities WHERE activity_type = "match"').fetchone()['count']
+    # Takım bazlı istatistikler
+    players_count = conn.execute('SELECT COUNT(*) as count FROM players WHERE team_id = ?', (team_id,)).fetchone()['count']
+    
+    query_counts = '''
+    SELECT 
+        COUNT(a.id) as total_activities,
+        SUM(CASE WHEN a.activity_type = 'training' THEN 1 ELSE 0 END) as training_count,
+        SUM(CASE WHEN a.activity_type = 'match' THEN 1 ELSE 0 END) as match_count
+    FROM activities a
+    JOIN players p ON a.player_id = p.id
+    WHERE p.team_id = ?
+    '''
+    counts = conn.execute(query_counts, (team_id,)).fetchone()
     
     # Son aktiviteler
     recent_activities = conn.execute('''
     SELECT a.date, p.name as player_name, a.activity_type, a.total_distance_m, a.duration_minutes
     FROM activities a 
     JOIN players p ON a.player_id = p.id 
+    WHERE p.team_id = ?
     ORDER BY a.created_at DESC 
     LIMIT 10
-    ''').fetchall()
+    ''', (team_id,)).fetchall()
     
     conn.close()
     
     return jsonify({
         'players_count': players_count,
-        'activities_count': activities_count,
-        'training_count': training_count,
-        'match_count': match_count,
+        'activities_count': counts['total_activities'] or 0,
+        'training_count': counts['training_count'] or 0,
+        'match_count': counts['match_count'] or 0,
         'recent_activities': [dict(row) for row in recent_activities]
     })
 
 if __name__ == '__main__':
+    # Veritabanını yeniden başlatmak için (opsiyonel)
+    if os.path.exists(DATABASE):
+        os.remove(DATABASE)
+        
     init_database()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
