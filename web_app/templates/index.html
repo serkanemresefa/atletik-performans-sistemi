@@ -137,6 +137,27 @@
         .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: #000; }
         @media (max-width: 768px) { .nav-tabs, .team-selector-container { flex-direction: column; } .form-row { grid-template-columns: 1fr; } }
+        
+        /* Player Detail Modal Styles */
+        .detail-tabs { display: flex; gap: 0; }
+        .detail-tab { padding: 12px 20px; border: none; background: #f8f9fa; color: #666; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
+        .detail-tab.active { background: #007bff; color: white; border-bottom-color: #0056b3; }
+        .detail-tab:hover { background: #e9ecef; color: #333; }
+        .detail-tab.active:hover { background: #0056b3; color: white; }
+        
+        .detail-tab-content { display: none; }
+        .detail-tab-content.active { display: block; }
+        
+        .detail-section { margin-bottom: 30px; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; background: #fff; }
+        .detail-section h4 { margin: 0 0 15px 0; color: #495057; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .detail-item { display: flex; flex-direction: column; }
+        .detail-item label { font-weight: 600; color: #495057; margin-bottom: 5px; }
+        .detail-item .view-mode { padding: 8px; background: #f8f9fa; border-radius: 4px; min-height: 20px; }
+        .detail-full-width { grid-column: 1/-1; }
+        .detail-full-width label { font-weight: 600; color: #495057; margin-bottom: 5px; display: block; }
+        .detail-full-width .view-mode { padding: 10px; background: #f8f9fa; border-radius: 4px; min-height: 50px; }
     </style>
 </head>
 <body>
@@ -243,6 +264,13 @@
                 </div>
             </div>
             <div id="player-alert"></div>
+            
+            <!-- Add Player Button (shown only when team is selected) -->
+            <div id="add-player-section" style="display: none; margin-bottom: 20px;">
+                <button class="btn btn-success" onclick="openPlayerModal()" style="margin-right: 10px;">➕ Yeni Oyuncu Ekle</button>
+                <span style="color: #666; font-size: 14px;">Seçili takıma yeni oyuncu ekleyebilirsiniz</span>
+            </div>
+            
             <div class="table-container">
                 <h3>Mevcut Oyuncular</h3>
                 <table class="table"><thead><tr><th>Oyuncu Adı</th><th>Pozisyon</th><th>Kayıt Tarihi</th><th>Aksiyonlar</th></tr></thead><tbody id="players-table"></tbody></table>
@@ -294,26 +322,6 @@
                 </form>
             </div>
             
-            <!-- Step 3: Player Management -->
-            <div class="table-container" style="margin-top: 30px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>3️⃣ Oyuncu Yönetimi</h3>
-                    <div>
-                        <label for="team-management-select" style="margin-right: 10px;">Takım Seç:</label>
-                        <select id="team-management-select" class="form-control" style="display: inline-block; width: auto; min-width: 200px;" onchange="handleTeamManagementChange()">
-                            <option value="">Takım seçiniz</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div id="player-management-section" style="display: none;">
-                    <button class="btn btn-success" onclick="openPlayerModal()" style="margin-bottom: 20px;">➕ Yeni Oyuncu Ekle</button>
-                    
-                    <div id="players-grid" class="stats-grid">
-                        <!-- Player cards will be loaded here -->
-                    </div>
-                </div>
-            </div>
         </div>
         
         <!-- Player Detail Modal -->
@@ -468,8 +476,8 @@
                         <div class="form-group"><label for="modal-sprint">24+ km/h Sprint Mesafe (m)</label><input type="number" id="modal-sprint" class="form-control" min="0" step="1"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label for="modal-acc">İvmelenme/Decc Sayısı</label><input type="number" id="modal-acc" class="form-control" min="0" step="1"></div>
-                        <div class="form-group"><label for="modal-high_acc">Yüksek İvmelenme Sayısı</label><input type="number" id="modal-high_acc" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-acc">AccDecc Sayısı</label><input type="number" id="modal-acc" class="form-control" min="0" step="1"></div>
+                        <div class="form-group"><label for="modal-high_acc">Yüksek AccDecc Sayısı</label><input type="number" id="modal-high_acc" class="form-control" min="0" step="1"></div>
                         <div class="form-group"><label for="modal-metabolic">Metabolik Güç Mesafesi (m)</label><input type="number" id="modal-metabolic" class="form-control" min="0" step="1"></div>
                     </div>
                     <div class="form-group"><label for="modal-notes">Notlar</label><textarea id="modal-notes" class="form-control" rows="2"></textarea></div>
@@ -477,6 +485,240 @@
                     <button type="submit" class="btn btn-success">Kaydet</button>
                     <button type="button" class="btn" onclick="closeDataEntryModal()" style="margin-left: 10px;">İptal</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div id="player-detail-modal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 id="player-detail-title">Oyuncu Detayları</h3>
+                <span class="close" onclick="closePlayerDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Player Summary Card -->
+                <div class="player-summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="player-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                            👤
+                        </div>
+                        <div style="flex: 1;">
+                            <h2 id="detail-player-name" style="margin: 0; color: white;">-</h2>
+                            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                <span><strong>Pozisyon:</strong> <span id="detail-position">-</span></span>
+                                <span><strong>Yaş:</strong> <span id="detail-age">-</span></span>
+                                <span><strong>Forma:</strong> #<span id="detail-jersey">-</span></span>
+                                <span><strong>Boy:</strong> <span id="detail-height">-</span>cm</span>
+                                <span><strong>Kilo:</strong> <span id="detail-weight">-</span>kg</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="btn" onclick="togglePlayerEdit()" id="edit-toggle-btn" style="background: rgba(255,255,255,0.2); color: white; margin-bottom: 10px;">✏️ Düzenle</button>
+                            <div style="font-size: 12px; opacity: 0.8;">Son güncelleme<br><span id="detail-updated">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="detail-tabs" style="display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee;">
+                    <button class="detail-tab active" onclick="showDetailTab('personal')" id="tab-personal">Kişisel Bilgiler</button>
+                    <button class="detail-tab" onclick="showDetailTab('performance')" id="tab-performance">Performans Geçmişi</button>
+                    <button class="detail-tab" onclick="showDetailTab('stats')" id="tab-stats">İstatistikler</button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div id="detail-content-personal" class="detail-tab-content active">
+                    <div class="detail-section">
+                        <h4>Temel Bilgiler</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Ad:</label>
+                                <span id="view-first-name" class="view-mode">-</span>
+                                <input type="text" id="edit-first-name" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Soyad:</label>
+                                <span id="view-last-name" class="view-mode">-</span>
+                                <input type="text" id="edit-last-name" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Doğum Tarihi:</label>
+                                <span id="view-birth-date" class="view-mode">-</span>
+                                <input type="date" id="edit-birth-date" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Uyruk:</label>
+                                <span id="view-nationality" class="view-mode">-</span>
+                                <input type="text" id="edit-nationality" class="edit-mode form-control" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>Pozisyon & Oyun</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Ana Pozisyon:</label>
+                                <span id="view-primary-position" class="view-mode">-</span>
+                                <select id="edit-primary-position" class="edit-mode form-control" style="display: none;">
+                                    <option value="GK">Kaleci (GK)</option>
+                                    <option value="CB">Stoper (CB)</option>
+                                    <option value="LB">Sol Bek (LB)</option>
+                                    <option value="RB">Sağ Bek (RB)</option>
+                                    <option value="CDM">Defansif Orta Saha (CDM)</option>
+                                    <option value="CM">Orta Saha (CM)</option>
+                                    <option value="CAM">Ofansif Orta Saha (CAM)</option>
+                                    <option value="LM">Sol Orta Saha (LM)</option>
+                                    <option value="RM">Sağ Orta Saha (RM)</option>
+                                    <option value="LW">Sol Kanat (LW)</option>
+                                    <option value="RW">Sağ Kanat (RW)</option>
+                                    <option value="ST">Santrafor (ST)</option>
+                                </select>
+                            </div>
+                            <div class="detail-item">
+                                <label>Yan Pozisyonlar:</label>
+                                <span id="view-secondary-positions" class="view-mode">-</span>
+                                <input type="text" id="edit-secondary-positions" class="edit-mode form-control" style="display: none;" placeholder="örn: RW,CAM">
+                            </div>
+                            <div class="detail-item">
+                                <label>Tercih Edilen Ayak:</label>
+                                <span id="view-preferred-foot" class="view-mode">-</span>
+                                <select id="edit-preferred-foot" class="edit-mode form-control" style="display: none;">
+                                    <option value="Sağ">Sağ</option>
+                                    <option value="Sol">Sol</option>
+                                    <option value="Her ikisi">Her ikisi</option>
+                                </select>
+                            </div>
+                            <div class="detail-item">
+                                <label>Forma Numarası:</label>
+                                <span id="view-jersey-number" class="view-mode">-</span>
+                                <input type="number" id="edit-jersey-number" class="edit-mode form-control" style="display: none;" min="1" max="99">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>Fiziksel Özellikler & Sağlık</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Boy (cm):</label>
+                                <span id="view-height-cm" class="view-mode">-</span>
+                                <input type="number" id="edit-height-cm" class="edit-mode form-control" style="display: none;" min="150" max="220">
+                            </div>
+                            <div class="detail-item">
+                                <label>Kilo (kg):</label>
+                                <span id="view-weight-kg" class="view-mode">-</span>
+                                <input type="number" id="edit-weight-kg" class="edit-mode form-control" style="display: none;" step="0.1" min="40" max="120">
+                            </div>
+                            <div class="detail-item">
+                                <label>Kan Grubu:</label>
+                                <span id="view-blood-type" class="view-mode">-</span>
+                                <select id="edit-blood-type" class="edit-mode form-control" style="display: none;">
+                                    <option value="">Bilinmiyor</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="detail-item">
+                                <label>Mevcut Sağlık Durumu:</label>
+                                <span id="view-current-injury-status" class="view-mode">-</span>
+                                <input type="text" id="edit-current-injury-status" class="edit-mode form-control" style="display: none;" placeholder="Sağlam, Sakatlık var, vb.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>İletişim</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Telefon:</label>
+                                <span id="view-phone" class="view-mode">-</span>
+                                <input type="tel" id="edit-phone" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Email:</label>
+                                <span id="view-email" class="view-mode">-</span>
+                                <input type="email" id="edit-email" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Acil Durum Kişisi:</label>
+                                <span id="view-emergency-contact" class="view-mode">-</span>
+                                <input type="text" id="edit-emergency-contact" class="edit-mode form-control" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>Kulüp Geçmişi</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Önceki Kulüp:</label>
+                                <span id="view-previous-club" class="view-mode">-</span>
+                                <input type="text" id="edit-previous-club" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Sözleşme Başlangıç:</label>
+                                <span id="view-contract-start" class="view-mode">-</span>
+                                <input type="date" id="edit-contract-start" class="edit-mode form-control" style="display: none;">
+                            </div>
+                            <div class="detail-item">
+                                <label>Sözleşme Bitiş:</label>
+                                <span id="view-contract-end" class="view-mode">-</span>
+                                <input type="date" id="edit-contract-end" class="edit-mode form-control" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="detail-full-width">
+                            <label>Kulüp Geçmişi:</label>
+                            <div id="view-club-history" class="view-mode" style="margin-top: 5px;">-</div>
+                            <textarea id="edit-club-history" class="edit-mode form-control" style="display: none;" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>Sakatlık Geçmişi & Notlar</h4>
+                        <div class="detail-full-width">
+                            <label>Sakatlık Geçmişi:</label>
+                            <div id="view-injury-history" class="view-mode" style="margin-top: 5px;">-</div>
+                            <textarea id="edit-injury-history" class="edit-mode form-control" style="display: none;" rows="3"></textarea>
+                        </div>
+                        <div class="detail-full-width">
+                            <label>Notlar:</label>
+                            <div id="view-notes" class="view-mode" style="margin-top: 5px;">-</div>
+                            <textarea id="edit-notes" class="edit-mode form-control" style="display: none;" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode Buttons -->
+                    <div class="edit-mode" style="display: none; margin-top: 30px; text-align: center;">
+                        <button class="btn btn-success" onclick="savePlayerDetails()" style="margin-right: 10px;">💾 Kaydet</button>
+                        <button class="btn" onclick="cancelPlayerEdit()">❌ İptal</button>
+                    </div>
+                </div>
+
+                <div id="detail-content-performance" class="detail-tab-content" style="display: none;">
+                    <div class="detail-section">
+                        <h4>Son Aktiviteler</h4>
+                        <div id="player-activities-list">
+                            <div class="loading">Aktiviteler yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="detail-content-stats" class="detail-tab-content" style="display: none;">
+                    <div class="detail-section">
+                        <h4>Performans İstatistikleri</h4>
+                        <div id="player-stats-summary">
+                            <div class="loading">İstatistikler yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -602,8 +844,10 @@
             
             if (currentTeamId) {
                 localStorage.setItem('selectedTeamId', currentTeamId);
+                document.getElementById('add-player-section').style.display = 'block';
                 loadPlayers();
             } else {
+                document.getElementById('add-player-section').style.display = 'none';
                 players = [];
                 updatePlayerDropdowns();
                 loadPlayersTable();
@@ -668,7 +912,7 @@
                     const fullName = p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'İsimsiz Oyuncu';
                     const position = p.primary_position || p.position || '-';
                     
-                    tbody.innerHTML += `<tr><td><span id="player-name-${p.id}">${fullName}</span><input type="text" id="player-name-edit-${p.id}" value="${fullName}" class="form-control" style="display:none;"></td><td><span id="player-position-${p.id}">${position}</span><select id="player-position-edit-${p.id}" class="form-control" style="display:none;"><option value="Forward">Forvet</option><option value="Midfielder">Orta Saha</option><option value="Defender">Defans</option><option value="Goalkeeper">Kaleci</option></select></td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td><td><button class="btn btn-sm btn-success" onclick="openDataEntryModal(${p.id}, '${fullName}')" style="margin-right: 5px;">Veri Gir</button><button class="btn btn-sm" onclick="editPlayer(${p.id})" id="player-edit-btn-${p.id}" style="margin-right: 5px;">Düzenle</button><button class="btn btn-sm btn-success" onclick="savePlayer(${p.id})" id="player-save-btn-${p.id}" style="display:none; margin-right: 5px;">Kaydet</button><button class="btn btn-sm" onclick="cancelEditPlayer(${p.id})" id="player-cancel-btn-${p.id}" style="display:none; margin-right: 5px;">İptal</button><button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id}, '${fullName}')">Sil</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${fullName}</td><td>${position}</td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td><td><button class="btn btn-sm" onclick="openPlayerDetailModal(${p.id})" style="margin-right: 5px;">Detay</button><button class="btn btn-sm btn-success" onclick="openDataEntryModal(${p.id}, '${fullName}')" style="margin-right: 5px;">Veri Gir</button><button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id}, '${fullName}')">Sil</button></td></tr>`;
                 });
             }
         }
@@ -703,7 +947,6 @@
                     e.target.reset();
                     await loadTeams(); // Wait for teams to load first
                     loadTeamsTable();
-                    loadTeamManagementDropdown();
                 } else {
                     showAlert('team-alert', 'error', data.error);
                 }
@@ -977,7 +1220,6 @@
                     document.getElementById(`team-name-${teamId}`).textContent = newName;
                     cancelEditTeam(teamId);
                     loadTeams(); // Refresh team list
-                    loadTeamManagementDropdown();
                 } else {
                     showAlert('team-alert', 'error', data.error);
                 }
@@ -1008,18 +1250,11 @@
                         showAlert('team-alert', 'success', data.message);
                         loadTeams();
                         loadTeamsTable();
-                        loadTeamManagementDropdown();
-                        // Clear current team if deleted
+                            // Clear current team if deleted
                         if (currentTeamId == teamId) {
                             currentTeamId = null;
                             localStorage.removeItem('selectedTeamId');
                             handlePlayerTeamChange();
-                        }
-                        // Clear team management selection if deleted
-                        if (selectedTeamForManagement == teamId) {
-                            selectedTeamForManagement = null;
-                            document.getElementById('team-management-select').value = '';
-                            document.getElementById('player-management-section').style.display = 'none';
                         }
                     } else {
                         showAlert('team-alert', 'error', data.error);
@@ -1032,9 +1267,6 @@
         }
 
         // Player Edit/Delete Functions
-        function editPlayer(playerId) {
-            openPlayerModal(playerId);
-        }
 
 
         async function deletePlayer(playerId, playerName) {
@@ -1068,82 +1300,8 @@
             }
         }
 
-        // Team Management Functions
-        let selectedTeamForManagement = null;
 
-        function handleTeamManagementChange() {
-            const teamSelect = document.getElementById('team-management-select');
-            selectedTeamForManagement = teamSelect.value;
-            
-            if (selectedTeamForManagement) {
-                document.getElementById('player-management-section').style.display = 'block';
-                loadTeamPlayers(selectedTeamForManagement);
-            } else {
-                document.getElementById('player-management-section').style.display = 'none';
-            }
-        }
 
-        function loadTeamManagementDropdown() {
-            const teamSelect = document.getElementById('team-management-select');
-            teamSelect.innerHTML = '<option value="">Takım seçiniz</option>';
-            teams.forEach(team => {
-                teamSelect.add(new Option(team.name, team.id));
-            });
-        }
-
-        async function loadTeamPlayers(teamId) {
-            try {
-                const response = await fetch(`/api/players?team_id=${teamId}`);
-                const players = await response.json();
-                displayPlayerCards(players);
-            } catch (error) {
-                console.error('Error loading team players:', error);
-            }
-        }
-
-        function displayPlayerCards(players) {
-            const grid = document.getElementById('players-grid');
-            grid.innerHTML = '';
-            
-            if (players.length === 0) {
-                grid.innerHTML = '<div class="loading" style="grid-column: 1/-1;">Bu takımda henüz oyuncu yok. Oyuncu eklemek için yukarıdaki butonu kullanın.</div>';
-                return;
-            }
-            
-            players.forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'stat-card';
-                card.style.cursor = 'pointer';
-                card.onclick = () => viewPlayerDetails(player);
-                
-                const age = player.birth_date ? calculateAge(player.birth_date) : '-';
-                const height = player.height_cm ? `${player.height_cm}cm` : '-';
-                const position = player.primary_position || player.position || '-';
-                const jersey = player.jersey_number ? `#${player.jersey_number}` : '';
-                
-                // Handle both new schema (first_name/last_name) and old schema (name)
-                const firstName = player.first_name || '';
-                const lastName = player.last_name || '';
-                const fullName = player.name || `${firstName} ${lastName}`.trim() || 'İsimsiz Oyuncu';
-                
-                card.innerHTML = `
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.2rem; font-weight: bold; color: #0d6efd; margin-bottom: 5px;">
-                            ${jersey} ${fullName}
-                        </div>
-                        <div style="color: #666; margin-bottom: 10px;">${position}</div>
-                        <div style="font-size: 0.9rem; color: #888;">
-                            Yaş: ${age} | Boy: ${height}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <button class="btn btn-sm" onclick="event.stopPropagation(); editPlayer(${player.id})" style="margin-right: 5px;">Düzenle</button>
-                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deletePlayer(${player.id}, '${fullName}')">Sil</button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
 
         function calculateAge(birthDate) {
             const today = new Date();
@@ -1389,6 +1547,220 @@
             }
         }
 
+        
+        // Player Detail Modal Functions
+        let currentPlayerData = null;
+        let isEditMode = false;
+        
+        async function openPlayerDetailModal(playerId) {
+            try {
+                const response = await fetch(`/api/players/${playerId}`);
+                const player = await response.json();
+                if (response.ok) {
+                    currentPlayerData = player;
+                    populatePlayerDetailModal(player);
+                    document.getElementById('player-detail-modal').style.display = 'block';
+                    showDetailTab('personal');
+                } else {
+                    showAlert('player-alert', 'error', 'Oyuncu bilgileri yüklenemedi');
+                }
+            } catch (error) {
+                console.error('Error loading player details:', error);
+                showAlert('player-alert', 'error', 'Oyuncu bilgileri yüklenirken hata');
+            }
+        }
+        
+        function populatePlayerDetailModal(player) {
+            // Summary card
+            const fullName = `${player.first_name || ''} ${player.last_name || ''}`.trim() || 'İsimsiz Oyuncu';
+            document.getElementById('detail-player-name').textContent = fullName;
+            document.getElementById('detail-position').textContent = player.primary_position || '-';
+            document.getElementById('detail-age').textContent = player.birth_date ? calculateAge(player.birth_date) : '-';
+            document.getElementById('detail-jersey').textContent = player.jersey_number || '-';
+            document.getElementById('detail-height').textContent = player.height_cm || '-';
+            document.getElementById('detail-weight').textContent = player.weight_kg || '-';
+            document.getElementById('detail-updated').textContent = new Date(player.created_at).toLocaleDateString('tr-TR');
+            document.getElementById('player-detail-title').textContent = `${fullName} - Detayları`;
+            
+            // Personal info
+            document.getElementById('view-first-name').textContent = player.first_name || '-';
+            document.getElementById('view-last-name').textContent = player.last_name || '-';
+            document.getElementById('view-birth-date').textContent = player.birth_date ? new Date(player.birth_date).toLocaleDateString('tr-TR') : '-';
+            document.getElementById('view-nationality').textContent = player.nationality || '-';
+            document.getElementById('view-primary-position').textContent = player.primary_position || '-';
+            document.getElementById('view-secondary-positions').textContent = player.secondary_positions || '-';
+            document.getElementById('view-preferred-foot').textContent = player.preferred_foot || '-';
+            document.getElementById('view-jersey-number').textContent = player.jersey_number || '-';
+            document.getElementById('view-height-cm').textContent = player.height_cm ? `${player.height_cm} cm` : '-';
+            document.getElementById('view-weight-kg').textContent = player.weight_kg ? `${player.weight_kg} kg` : '-';
+            document.getElementById('view-blood-type').textContent = player.blood_type || '-';
+            document.getElementById('view-current-injury-status').textContent = player.current_injury_status || '-';
+            document.getElementById('view-phone').textContent = player.phone || '-';
+            document.getElementById('view-email').textContent = player.email || '-';
+            document.getElementById('view-emergency-contact').textContent = player.emergency_contact || '-';
+            document.getElementById('view-previous-club').textContent = player.previous_club || '-';
+            document.getElementById('view-contract-start').textContent = player.contract_start ? new Date(player.contract_start).toLocaleDateString('tr-TR') : '-';
+            document.getElementById('view-contract-end').textContent = player.contract_end ? new Date(player.contract_end).toLocaleDateString('tr-TR') : '-';
+            document.getElementById('view-club-history').textContent = player.club_history || '-';
+            document.getElementById('view-injury-history').textContent = player.injury_history || '-';
+            document.getElementById('view-notes').textContent = player.notes || '-';
+            
+            // Populate edit fields
+            document.getElementById('edit-first-name').value = player.first_name || '';
+            document.getElementById('edit-last-name').value = player.last_name || '';
+            document.getElementById('edit-birth-date').value = player.birth_date || '';
+            document.getElementById('edit-nationality').value = player.nationality || '';
+            document.getElementById('edit-primary-position').value = player.primary_position || '';
+            document.getElementById('edit-secondary-positions').value = player.secondary_positions || '';
+            document.getElementById('edit-preferred-foot').value = player.preferred_foot || '';
+            document.getElementById('edit-jersey-number').value = player.jersey_number || '';
+            document.getElementById('edit-height-cm').value = player.height_cm || '';
+            document.getElementById('edit-weight-kg').value = player.weight_kg || '';
+            document.getElementById('edit-blood-type').value = player.blood_type || '';
+            document.getElementById('edit-current-injury-status').value = player.current_injury_status || '';
+            document.getElementById('edit-phone').value = player.phone || '';
+            document.getElementById('edit-email').value = player.email || '';
+            document.getElementById('edit-emergency-contact').value = player.emergency_contact || '';
+            document.getElementById('edit-previous-club').value = player.previous_club || '';
+            document.getElementById('edit-contract-start').value = player.contract_start || '';
+            document.getElementById('edit-contract-end').value = player.contract_end || '';
+            document.getElementById('edit-club-history').value = player.club_history || '';
+            document.getElementById('edit-injury-history').value = player.injury_history || '';
+            document.getElementById('edit-notes').value = player.notes || '';
+        }
+        
+        function closePlayerDetailModal() {
+            document.getElementById('player-detail-modal').style.display = 'none';
+            if (isEditMode) {
+                cancelPlayerEdit();
+            }
+            currentPlayerData = null;
+        }
+        
+        function showDetailTab(tabName) {
+            // Hide all tabs and contents
+            document.querySelectorAll('.detail-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.detail-tab-content').forEach(content => content.style.display = 'none');
+            
+            // Show selected tab and content
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`detail-content-${tabName}`).style.display = 'block';
+            
+            // Load content based on tab
+            if (tabName === 'performance' && currentPlayerData) {
+                loadPlayerActivities(currentPlayerData.id);
+            } else if (tabName === 'stats' && currentPlayerData) {
+                loadPlayerStats(currentPlayerData.id);
+            }
+        }
+        
+        function togglePlayerEdit() {
+            if (isEditMode) {
+                cancelPlayerEdit();
+            } else {
+                enterEditMode();
+            }
+        }
+        
+        function enterEditMode() {
+            isEditMode = true;
+            document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'block');
+            document.getElementById('edit-toggle-btn').textContent = '❌ İptal';
+        }
+        
+        function cancelPlayerEdit() {
+            isEditMode = false;
+            document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'none');
+            document.getElementById('edit-toggle-btn').textContent = '✏️ Düzenle';
+            
+            // Restore original values
+            if (currentPlayerData) {
+                populatePlayerDetailModal(currentPlayerData);
+            }
+        }
+        
+        async function savePlayerDetails() {
+            try {
+                const updatedPlayer = {
+                    first_name: document.getElementById('edit-first-name').value,
+                    last_name: document.getElementById('edit-last-name').value,
+                    birth_date: document.getElementById('edit-birth-date').value,
+                    nationality: document.getElementById('edit-nationality').value,
+                    primary_position: document.getElementById('edit-primary-position').value,
+                    secondary_positions: document.getElementById('edit-secondary-positions').value,
+                    preferred_foot: document.getElementById('edit-preferred-foot').value,
+                    jersey_number: parseInt(document.getElementById('edit-jersey-number').value) || null,
+                    height_cm: parseInt(document.getElementById('edit-height-cm').value) || null,
+                    weight_kg: parseFloat(document.getElementById('edit-weight-kg').value) || null,
+                    blood_type: document.getElementById('edit-blood-type').value,
+                    current_injury_status: document.getElementById('edit-current-injury-status').value,
+                    phone: document.getElementById('edit-phone').value,
+                    email: document.getElementById('edit-email').value,
+                    emergency_contact: document.getElementById('edit-emergency-contact').value,
+                    previous_club: document.getElementById('edit-previous-club').value,
+                    contract_start: document.getElementById('edit-contract-start').value,
+                    contract_end: document.getElementById('edit-contract-end').value,
+                    club_history: document.getElementById('edit-club-history').value,
+                    injury_history: document.getElementById('edit-injury-history').value,
+                    notes: document.getElementById('edit-notes').value
+                };
+                
+                const response = await fetch(`/api/players/${currentPlayerData.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedPlayer)
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    currentPlayerData = { ...currentPlayerData, ...updatedPlayer };
+                    populatePlayerDetailModal(currentPlayerData);
+                    cancelPlayerEdit();
+                    loadPlayers(); // Refresh player list
+                    showAlert('player-alert', 'success', 'Oyuncu bilgileri güncellendi');
+                } else {
+                    showAlert('player-alert', 'error', result.error || 'Güncelleme hatası');
+                }
+            } catch (error) {
+                console.error('Error saving player details:', error);
+                showAlert('player-alert', 'error', 'Kaydetme hatası');
+            }
+        }
+        
+        async function loadPlayerActivities(playerId) {
+            try {
+                const response = await fetch(`/api/activities?player_id=${playerId}`);
+                const activities = await response.json();
+                const container = document.getElementById('player-activities-list');
+                
+                if (response.ok && activities.length > 0) {
+                    container.innerHTML = activities.map(activity => `
+                        <div style="border: 1px solid #e9ecef; padding: 15px; margin-bottom: 10px; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>${activity.activity_type === 'training' ? 'Antrenman' : 'Maç'}</strong>
+                                <span>${new Date(activity.date).toLocaleDateString('tr-TR')}</span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 14px; color: #666;">
+                                ${activity.duration_minutes ? `Süre: ${activity.duration_minutes} dk` : ''} 
+                                ${activity.total_distance_m ? `• Mesafe: ${activity.total_distance_m} m` : ''}
+                            </div>
+                            ${activity.notes ? `<div style="margin-top: 5px; font-style: italic;">${activity.notes}</div>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="loading">Bu oyuncu için henüz aktivite verisi yok.</div>';
+                }
+            } catch (error) {
+                document.getElementById('player-activities-list').innerHTML = '<div class="loading">Aktiviteler yüklenemedi.</div>';
+            }
+        }
+        
+        function loadPlayerStats(playerId) {
+            document.getElementById('player-stats-summary').innerHTML = '<div class="loading">İstatistikler henüz mevcut değil.</div>';
+        }
+        
     </script>
 </body>
 </html>

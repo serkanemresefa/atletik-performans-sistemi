@@ -145,16 +145,198 @@ def init_database():
                                 ('demo', 'demo@example.com', demo_password))
             demo_user_id = cursor.lastrowid
             
-            cursor = conn.execute("INSERT INTO teams (name, user_id) VALUES (?, ?)", ('U17 Milli Takım', demo_user_id))
-            team_id = cursor.lastrowid
-            sample_players = [
-                ('Aleyna', 'Can', '2005-03-15', 'Türkiye', 'ST', 'RW,CAM', 'Sağ', 10, 165, 58.5, 'Fenerbahçe U19', 'Fenerbahçe U16, Fenerbahçe U19', '2024-01-01', '2026-12-31', 'A+', '', 'Sağlam', '0555-123-4567', 'aleyna.can@example.com', 'Anne: 0555-987-6543', 'Hızlı ve teknikli forvet', team_id),
-                ('Berra', 'Pekgöz', '2004-07-22', 'Türkiye', 'CM', 'CDM,CAM', 'Sol', 8, 168, 61.0, 'Galatasaray U19', 'Galatasaray U16, Galatasaray U19', '2024-01-01', '2026-12-31', 'O-', '', 'Sağlam', '0555-234-5678', 'berra.pekgoz@example.com', 'Baba: 0555-876-5432', 'Orta saha organizatörü', team_id),
-                ('Ecemnur', 'Öztürk', '2005-11-08', 'Türkiye', 'CB', 'LB,RB', 'Sağ', 4, 172, 64.5, 'Beşiktaş U19', 'Beşiktaş U16, Beşiktaş U19', '2024-01-01', '2026-12-31', 'B+', 'Diz sakatlığı - 2023 (2 ay)', 'Sağlam', '0555-345-6789', 'ecemnur.ozturk@example.com', 'Anne: 0555-765-4321', 'Güçlü ve hava toplarında iyi', team_id)
+            # Create demo teams with full details
+            team1_cursor = conn.execute("INSERT INTO teams (name, league, season, coach_name, description, user_id) VALUES (?, ?, ?, ?, ?, ?)", 
+                                      ('Fenerbahçe U19', 'U19 Elit Ligi', '2024-25', 'Emre Belözoğlu', 'Fenerbahçe altyapı takımı - gelecek vadeden oyuncular', demo_user_id))
+            team1_id = team1_cursor.lastrowid
+            
+            team2_cursor = conn.execute("INSERT INTO teams (name, league, season, coach_name, description, user_id) VALUES (?, ?, ?, ?, ?, ?)", 
+                                      ('Galatasaray A2', 'Süper Lig', '2024-25', 'Okan Buruk', 'Galatasaray 2. takım - genç yetenek geliştirme', demo_user_id))
+            team2_id = team2_cursor.lastrowid
+            
+            # Fenerbahçe U19 Full Squad (18 players)
+            fenerbahce_players = [
+                # Kaleciler
+                ('Arda', 'Güvenç', '2005-01-15', 'Türkiye', 'GK', '', 'Sağ', 1, 188, 78.0, 'Fenerbahçe U17', 'Fenerbahçe U15, U16, U17', '2024-01-01', '2025-06-30', 'A+', '', 'Sağlam', '0555-101-0001', 'arda.guvenc@fb.org.tr', 'Anne: 0555-201-0001', 'Refleksleri güçlü genç kaleci', team1_id),
+                ('Mehmet', 'Akgün', '2006-03-22', 'Türkiye', 'GK', '', 'Sağ', 12, 185, 76.5, 'Fenerbahçe U16', 'Fenerbahçe U14, U15, U16', '2024-01-01', '2025-06-30', 'O+', '', 'Sağlam', '0555-101-0002', 'mehmet.akgun@fb.org.tr', 'Baba: 0555-201-0002', 'Yetenekli 2. kaleci', team1_id),
+                
+                # Defanslar
+                ('Can', 'Uzun', '2005-04-10', 'Türkiye', 'CB', 'RB', 'Sağ', 2, 185, 79.0, 'Fenerbahçe U17', 'Fenerbahçe U15, U16, U17', '2024-01-01', '2026-06-30', 'A-', '', 'Sağlam', '0555-101-0003', 'can.uzun@fb.org.tr', 'Anne: 0555-201-0003', 'Liderlik özelliği olan stoper', team1_id),
+                ('Emir', 'Ortakaya', '2006-02-18', 'Türkiye', 'CB', 'LB', 'Sol', 4, 182, 75.0, 'Fenerbahçe U16', 'Fenerbahçe U14, U15, U16', '2024-01-01', '2025-06-30', 'B+', '', 'Sağlam', '0555-101-0004', 'emir.ortakaya@fb.org.tr', 'Baba: 0555-201-0004', 'Hızlı ve çıkış yapabilen stoper', team1_id),
+                ('Kerem', 'Kesgin', '2005-07-05', 'Türkiye', 'LB', 'LM', 'Sol', 3, 176, 68.0, 'Galatasaray U17', 'Galatasaray U15, U16, U17', '2024-07-01', '2026-06-30', 'O-', '', 'Sağlam', '0555-101-0005', 'kerem.kesgin@fb.org.tr', 'Anne: 0555-201-0005', 'Hücuma destek veren sol bek', team1_id),
+                ('Burak', 'Özdemir', '2005-09-12', 'Türkiye', 'RB', 'RM', 'Sağ', 20, 179, 71.5, 'Beşiktaş U17', 'Beşiktaş U15, U16, U17', '2024-07-01', '2026-06-30', 'A+', '', 'Sağlam', '0555-101-0006', 'burak.ozdemir@fb.org.tr', 'Baba: 0555-201-0006', 'Dayanıklı ve disiplinli sağ bek', team1_id),
+                
+                # Orta sahalar
+                ('Enes', 'Ünal', '2005-05-20', 'Türkiye', 'CDM', 'CM', 'Sağ', 6, 180, 72.0, 'Trabzonspor U17', 'Trabzonspor U15, U16, U17', '2024-01-01', '2026-06-30', 'B-', '', 'Sağlam', '0555-101-0007', 'enes.unal@fb.org.tr', 'Anne: 0555-201-0007', 'Defansif orta saha, top kırma uzmanı', team1_id),
+                ('Mert', 'Hakan', '2005-08-08', 'Türkiye', 'CM', 'CAM,CDM', 'Her ikisi', 8, 177, 69.0, 'Fenerbahçe U17', 'Fenerbahçe U15, U16, U17', '2024-01-01', '2026-06-30', 'AB+', '', 'Sağlam', '0555-101-0008', 'mert.hakan@fb.org.tr', 'Baba: 0555-201-0008', 'Box-to-box oyuncu, her pozisyonda oynayabilir', team1_id),
+                ('Yusuf', 'Yazıcı', '2006-01-30', 'Türkiye', 'CAM', 'CM,LM', 'Sol', 10, 174, 66.5, 'Lille U17', 'Lille U15, U16, U17', '2024-07-01', '2027-06-30', 'A+', '', 'Sağlam', '0555-101-0009', 'yusuf.yazici@fb.org.tr', 'Anne: 0555-201-0009', 'Kreativ oyuncu, pas ve şut kalitesi yüksek', team1_id),
+                ('Ali', 'Koç', '2005-11-25', 'Türkiye', 'RM', 'RW,CAM', 'Sağ', 11, 172, 65.0, 'Fenerbahçe U17', 'Fenerbahçe U15, U16, U17', '2024-01-01', '2025-06-30', 'O+', '', 'Sağlam', '0555-101-0010', 'ali.koc@fb.org.tr', 'Baba: 0555-201-0010', 'Hızlı kanat oyuncusu, 1v1 iyi', team1_id),
+                ('Emre', 'Mor', '2005-12-03', 'Türkiye', 'LM', 'LW,CAM', 'Sol', 7, 170, 63.0, 'Celta Vigo U17', 'Celta Vigo U15, U16, U17', '2024-07-01', '2027-06-30', 'B+', '', 'Sağlam', '0555-101-0011', 'emre.mor@fb.org.tr', 'Anne: 0555-201-0011', 'Teknikli sol kanat, dribling ustası', team1_id),
+                
+                # Forvetler  
+                ('Arda', 'Güler', '2005-02-25', 'Türkiye', 'RW', 'CAM,ST', 'Sol', 21, 175, 68.0, 'Real Madrid Castilla', 'Real Madrid U16, U17, Castilla', '2024-07-01', '2027-06-30', 'A-', '', 'Sağlam', '0555-101-0012', 'arda.guler@fb.org.tr', 'Baba: 0555-201-0012', 'Genç yıldız, şut ve pas kalitesi mükemmel', team1_id),
+                ('Cenk', 'Tosun', '2005-06-18', 'Türkiye', 'ST', 'CAM', 'Sağ', 9, 183, 76.0, 'Everton U18', 'Everton U16, U17, U18', '2024-07-01', '2026-06-30', 'O-', '', 'Sağlam', '0555-101-0013', 'cenk.tosun@fb.org.tr', 'Anne: 0555-201-0013', 'Güçlü santrafor, hava toplarında etkili', team1_id),
+                ('Barış', 'Alper', '2006-04-14', 'Türkiye', 'LW', 'ST,CAM', 'Sol', 17, 173, 64.5, 'Fenerbahçe U16', 'Fenerbahçe U14, U15, U16', '2024-01-01', '2025-06-30', 'AB-', '', 'Sağlam', '0555-101-0014', 'baris.alper@fb.org.tr', 'Baba: 0555-201-0014', 'Hızlı sol kanat, finiş kalitesi iyi', team1_id),
+                
+                # Yedekler
+                ('Umut', 'Bozok', '2005-10-07', 'Türkiye', 'ST', 'CAM', 'Sağ', 19, 181, 73.0, 'Nürnberg U17', 'Nürnberg U15, U16, U17', '2024-07-01', '2026-06-30', 'A+', '', 'Sağlam', '0555-101-0015', 'umut.bozok@fb.org.tr', 'Anne: 0555-201-0015', 'Alternatif forvet, pozisyon alması iyi', team1_id),
+                ('Dorukhan', 'Toköz', '2005-03-28', 'Türkiye', 'CM', 'CDM,RB', 'Sağ', 15, 178, 70.0, 'Fenerbahçe U17', 'Fenerbahçe U15, U16, U17', '2024-01-01', '2025-06-30', 'B+', 'Ayak bileği burkulması - 2024 (3 hafta)', 'İyileşme aşamasında', '0555-101-0016', 'dorukhan.tokoz@fb.org.tr', 'Baba: 0555-201-0016', 'Çok fonksiyonlu oyuncu, takım oyunu güçlü', team1_id),
+                ('İrfan Can', 'Kahveci', '2005-07-15', 'Türkiye', 'CAM', 'CM,RW', 'Sol', 14, 176, 67.0, 'Medipol Başakşehir U17', 'Başakşehir U15, U16, U17', '2024-07-01', '2026-06-30', 'O+', '', 'Sağlam', '0555-101-0017', 'irfancan.kahveci@fb.org.tr', 'Anne: 0555-201-0017', 'Çok yetenekli ofansif oyuncu, set piece uzmanı', team1_id),
+                ('Oğuzhan', 'Özyakup', '2005-09-23', 'Türkiye', 'CM', 'CAM,CDM', 'Sağ', 16, 175, 68.5, 'Feyenoord U17', 'Feyenoord U15, U16, U17', '2024-07-01', '2027-06-30', 'A-', '', 'Sağlam', '0555-101-0018', 'oguzhan.ozyakup@fb.org.tr', 'Baba: 0555-201-0018', 'Pas dağıtımı mükemmel, oyun kurma yetisi var', team1_id)
             ]
-            conn.executemany("INSERT INTO players (first_name, last_name, birth_date, nationality, primary_position, secondary_positions, preferred_foot, jersey_number, height_cm, weight_kg, previous_club, club_history, contract_start, contract_end, blood_type, injury_history, current_injury_status, phone, email, emergency_contact, notes, team_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", sample_players)
+            
+            # Galatasaray A2 Squad (10 players - smaller squad)
+            galatasaray_players = [
+                # Kaleci
+                ('Berke', 'Özer', '2004-05-10', 'Türkiye', 'GK', '', 'Sağ', 1, 190, 82.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2026-06-30', 'A+', '', 'Sağlam', '0555-201-0001', 'berke.ozer@gala.org', 'Baba: 0555-301-0001', 'Yetenekli genç kaleci, A takım yedeklerinde', team2_id),
+                
+                # Defanslar
+                ('Kaan', 'Ayhan', '2004-08-15', 'Türkiye', 'CB', 'CDM', 'Sağ', 4, 186, 78.0, 'Fortuna Düsseldorf', 'Fortuna Düsseldorf U19, U21', '2024-07-01', '2026-06-30', 'O+', '', 'Sağlam', '0555-201-0002', 'kaan.ayhan@gala.org', 'Anne: 0555-301-0002', 'Güçlü stoper, liderlik vasfı var', team2_id),
+                ('Alpaslan', 'Öztürk', '2004-11-22', 'Türkiye', 'LB', 'LM', 'Sol', 3, 177, 70.0, 'Fenerbahçe U19', 'Fenerbahçe U17, U18, U19', '2024-07-01', '2027-06-30', 'B-', '', 'Sağlam', '0555-201-0003', 'alpaslan.ozturk@gala.org', 'Baba: 0555-301-0003', 'Hızlı sol bek, hücuma katılır', team2_id),
+                ('Abdurrahim', 'Dursun', '2004-02-28', 'Türkiye', 'RB', 'CB', 'Sağ', 2, 181, 74.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2025-06-30', 'A-', '', 'Sağlam', '0555-201-0004', 'abdurrahim.dursun@gala.org', 'Anne: 0555-301-0004', 'Versatil defans oyuncusu', team2_id),
+                
+                # Orta sahalar
+                ('Kerem', 'Aktürkoğlu', '2004-10-21', 'Türkiye', 'LW', 'LM,CAM', 'Sol', 7, 174, 67.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2026-06-30', 'O-', '', 'Sağlam', '0555-201-0005', 'kerem.akturkoglu@gala.org', 'Baba: 0555-301-0005', 'Hızlı sol kanat, dribling ve finiş iyi', team2_id),
+                ('Taylan', 'Antalyalı', '2004-06-05', 'Türkiye', 'CDM', 'CM', 'Sağ', 6, 175, 68.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2026-06-30', 'AB+', '', 'Sağlam', '0555-201-0006', 'taylan.antalyali@gala.org', 'Anne: 0555-301-0006', 'Defansif orta saha, pas dağıtımı güçlü', team2_id),
+                ('Yunus', 'Akgün', '2004-07-07', 'Türkiye', 'CAM', 'CM,RW', 'Her ikisi', 10, 176, 69.0, 'Leicester City U21', 'Leicester U18, U19, U21', '2024-07-01', '2026-06-30', 'A+', '', 'Sağlam', '0555-201-0007', 'yunus.akgun@gala.org', 'Baba: 0555-301-0007', 'Teknikli 10 numara, şut kalitesi yüksek', team2_id),
+                
+                # Forvetler
+                ('Halil', 'Dervişoğlu', '2004-12-08', 'Türkiye', 'ST', 'RW', 'Sağ', 9, 185, 77.0, 'Brentford U21', 'Brentford U18, U19, U21', '2024-07-01', '2026-06-30', 'B+', '', 'Sağlam', '0555-201-0008', 'halil.dervisoglu@gala.org', 'Anne: 0555-301-0008', 'Güçlü santrafor, hava topu ve bitiricilik iyi', team2_id),
+                ('Berkan', 'Kutlu', '2004-09-18', 'Türkiye', 'RW', 'CAM,ST', 'Sol', 11, 172, 65.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2025-06-30', 'O+', 'Hamstring - 2024 (2 hafta)', 'Sağlam', '0555-201-0009', 'berkan.kutlu@gala.org', 'Baba: 0555-301-0009', 'Çok yönlü ofansif oyuncu, çalışkan', team2_id),
+                ('Atalay', 'Babacan', '2004-04-30', 'Türkiye', 'ST', 'CAM', 'Sağ', 19, 180, 72.0, 'Galatasaray U19', 'Galatasaray U17, U18, U19', '2024-01-01', '2025-06-30', 'A-', '', 'Sağlam', '0555-201-0010', 'atalay.babacan@gala.org', 'Anne: 0555-301-0010', 'Genç forvet, gelişim aşamasında', team2_id)
+            ]
+            
+            # Insert both teams' players
+            conn.executemany("INSERT INTO players (first_name, last_name, birth_date, nationality, primary_position, secondary_positions, preferred_foot, jersey_number, height_cm, weight_kg, previous_club, club_history, contract_start, contract_end, blood_type, injury_history, current_injury_status, phone, email, emergency_contact, notes, team_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", fenerbahce_players)
+            conn.executemany("INSERT INTO players (first_name, last_name, birth_date, nationality, primary_position, secondary_positions, preferred_foot, jersey_number, height_cm, weight_kg, previous_club, club_history, contract_start, contract_end, blood_type, injury_history, current_injury_status, phone, email, emergency_contact, notes, team_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", galatasaray_players)
+            
+            # Get all inserted players for activity data
+            all_players = conn.execute('SELECT id, primary_position FROM players').fetchall()
+            
+            # Generate sample activity data
+            import random
+            from datetime import datetime, timedelta
+            
+            sample_activities = []
+            base_date = datetime.now() - timedelta(days=30)
+            
+            for player in all_players:
+                player_id = player[0]
+                position = player[1]
+                
+                # Generate 18 activities per player over 30 days
+                for i in range(18):
+                    # Random date within last 30 days
+                    days_ago = random.randint(1, 30)
+                    activity_date = (base_date + timedelta(days=days_ago)).strftime('%Y-%m-%d')
+                    
+                    # 70% training, 30% match
+                    activity_type = 'training' if random.random() < 0.7 else 'match'
+                    
+                    # Position-based performance values
+                    if position == 'GK':  # Goalkeepers
+                        duration = random.randint(80, 95)
+                        total_distance = random.randint(4000, 6000)
+                        hs16 = random.randint(200, 800)
+                        hs18 = random.randint(100, 400)
+                        hs20 = random.randint(50, 200)
+                        sprint = random.randint(20, 100)
+                        acc_decc = random.randint(180, 250)
+                        high_acc = random.randint(15, 35)
+                        metabolic = random.randint(800, 1200)
+                    elif position in ['CB', 'LB', 'RB']:  # Defenders
+                        duration = random.randint(85, 95)
+                        total_distance = random.randint(8000, 11000)
+                        hs16 = random.randint(800, 1500)
+                        hs18 = random.randint(400, 800)
+                        hs20 = random.randint(200, 500)
+                        sprint = random.randint(100, 300)
+                        acc_decc = random.randint(220, 280)
+                        high_acc = random.randint(25, 45)
+                        metabolic = random.randint(1200, 1800)
+                    elif position in ['CDM', 'CM', 'CAM', 'LM', 'RM']:  # Midfielders
+                        duration = random.randint(80, 95)
+                        total_distance = random.randint(10000, 13000)
+                        hs16 = random.randint(1200, 2000)
+                        hs18 = random.randint(600, 1200)
+                        hs20 = random.randint(300, 700)
+                        sprint = random.randint(150, 400)
+                        acc_decc = random.randint(250, 320)
+                        high_acc = random.randint(30, 55)
+                        metabolic = random.randint(1400, 2000)
+                    else:  # Forwards (LW, RW, ST)
+                        duration = random.randint(75, 90)
+                        total_distance = random.randint(9000, 12000)
+                        hs16 = random.randint(1500, 2500)
+                        hs18 = random.randint(800, 1500)
+                        hs20 = random.randint(400, 900)
+                        sprint = random.randint(200, 600)
+                        acc_decc = random.randint(200, 300)
+                        high_acc = random.randint(25, 50)
+                        metabolic = random.randint(1300, 1900)
+                    
+                    # Match vs Training variations
+                    if activity_type == 'match':
+                        # Matches are typically more intense
+                        total_distance = int(total_distance * random.uniform(1.1, 1.3))
+                        hs16 = int(hs16 * random.uniform(1.2, 1.5))
+                        hs18 = int(hs18 * random.uniform(1.3, 1.6))
+                        hs20 = int(hs20 * random.uniform(1.4, 1.7))
+                        sprint = int(sprint * random.uniform(1.5, 2.0))
+                        acc_decc = int(acc_decc * random.uniform(1.2, 1.4))
+                        high_acc = int(high_acc * random.uniform(1.3, 1.6))
+                        metabolic = int(metabolic * random.uniform(1.2, 1.5))
+                        duration = 90  # Standard match duration
+                        notes_options = [
+                            'İyi performans, takım oyunu güçlü',
+                            'Hızlı başlangıç, ikinci yarıda düştü',
+                            'Defansif görevi iyi yerine getirdi',
+                            'Hücumda etkili, pozisyon aldı',
+                            'Fiziksel olarak iyiydi',
+                            'Pas kalitesi yüksekti',
+                            'Baskı altında sakin kaldı'
+                        ]
+                    else:
+                        # Training variations
+                        variation = random.uniform(0.8, 1.2)
+                        total_distance = int(total_distance * variation)
+                        hs16 = int(hs16 * variation)
+                        hs18 = int(hs18 * variation)
+                        hs20 = int(hs20 * variation)
+                        sprint = int(sprint * variation)
+                        acc_decc = int(acc_decc * variation)
+                        high_acc = int(high_acc * variation)
+                        metabolic = int(metabolic * variation)
+                        notes_options = [
+                            'Teknik antrenman, pas çalışması',
+                            'Dayanıklılık odaklı antrenman',
+                            'Hız ve çeviklik çalışması',
+                            'Taktikal antrenman, pozisyonel',
+                            'Kondisyon antrenmanı',
+                            'Top ile çalışma ağırlıklı',
+                            'Fiziksel hazırlık antrenmanı'
+                        ]
+                    
+                    notes = random.choice(notes_options) if random.random() < 0.6 else ''
+                    
+                    sample_activities.append((
+                        player_id, activity_date, activity_type, duration,
+                        total_distance, hs16, hs18, hs20, sprint,
+                        acc_decc, high_acc, metabolic, notes
+                    ))
+            
+            # Insert all activity data
+            conn.executemany("""
+                INSERT INTO activities (
+                    player_id, date, activity_type, duration_minutes,
+                    total_distance_m, high_speed_16kmh_m, high_speed_18kmh_m,
+                    high_speed_20kmh_m, sprint_24kmh_m, acc_decc_count,
+                    high_acc_decc_count, high_metabolic_power_m, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, sample_activities)
+            
             conn.commit()
-            print("Database initialized and demo user created.")
+            print(f"Database initialized with demo user, {len(all_players)} players, and {len(sample_activities)} activities.")
         except sqlite3.IntegrityError:
             print("Demo user already exists.")
 
@@ -546,6 +728,86 @@ def get_team_delete_stats(team_id):
         'activity_count': activity_count
     })
 
+@app.route('/api/players/<int:player_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+def handle_single_player(player_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    if request.method == 'GET':
+        # Get single player details
+        player = conn.execute('''
+            SELECT p.* FROM players p 
+            JOIN teams t ON p.team_id = t.id 
+            WHERE p.id = ? AND t.user_id = ?
+        ''', (player_id, user_id)).fetchone()
+        
+        conn.close()
+        if player:
+            return jsonify(dict(player))
+        else:
+            return jsonify({'error': 'Oyuncu bulunamadı'}), 404
+    
+    elif request.method == 'PUT':
+        # Update player details
+        data = request.json
+        
+        # Verify player ownership first
+        player_check = conn.execute('''
+            SELECT 1 FROM players p 
+            JOIN teams t ON p.team_id = t.id 
+            WHERE p.id = ? AND t.user_id = ?
+        ''', (player_id, user_id)).fetchone()
+        
+        if not player_check:
+            conn.close()
+            return jsonify({'error': 'Yetkisiz erişim'}), 403
+        
+        # Update player
+        conn.execute('''
+            UPDATE players SET 
+                first_name=?, last_name=?, birth_date=?, nationality=?, 
+                primary_position=?, secondary_positions=?, preferred_foot=?, jersey_number=?,
+                height_cm=?, weight_kg=?, previous_club=?, club_history=?,
+                contract_start=?, contract_end=?, blood_type=?, injury_history=?,
+                current_injury_status=?, phone=?, email=?, emergency_contact=?, notes=?
+            WHERE id=?
+        ''', (
+            data.get('first_name'), data.get('last_name'), data.get('birth_date'), 
+            data.get('nationality'), data.get('primary_position'), data.get('secondary_positions'),
+            data.get('preferred_foot'), data.get('jersey_number'), data.get('height_cm'), 
+            data.get('weight_kg'), data.get('previous_club'), data.get('club_history'),
+            data.get('contract_start'), data.get('contract_end'), data.get('blood_type'),
+            data.get('injury_history'), data.get('current_injury_status'), data.get('phone'),
+            data.get('email'), data.get('emergency_contact'), data.get('notes'), player_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Oyuncu güncellendi'})
+    
+    elif request.method == 'DELETE':
+        # Delete player logic (existing)
+        # Verify player ownership
+        player_check = conn.execute('''
+            SELECT 1 FROM players p 
+            JOIN teams t ON p.team_id = t.id 
+            WHERE p.id = ? AND t.user_id = ?
+        ''', (player_id, user_id)).fetchone()
+        
+        if not player_check:
+            conn.close()
+            return jsonify({'error': 'Yetkisiz erişim'}), 403
+        
+        # Delete associated activities first
+        conn.execute('DELETE FROM activities WHERE player_id = ?', (player_id,))
+        # Delete player
+        conn.execute('DELETE FROM players WHERE id = ?', (player_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Oyuncu silindi'})
+
 @app.route('/api/players/<int:player_id>/stats', methods=['GET'])
 @login_required
 def get_player_delete_stats(player_id):
@@ -607,6 +869,38 @@ def add_activity():
     conn.commit()
     conn.close()
     return jsonify({'success': True}), 201
+
+@app.route('/api/activities', methods=['GET'])
+@login_required
+def get_activities():
+    user_id = session['user_id']
+    player_id = request.args.get('player_id')
+    
+    if not player_id:
+        return jsonify({'error': 'player_id gerekli'}), 400
+    
+    conn = get_db_connection()
+    
+    # Oyuncunun kullanıcının takımına ait olduğunu kontrol et
+    player_check = conn.execute('''
+        SELECT p.id FROM players p 
+        JOIN teams t ON p.team_id = t.id 
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player_check:
+        conn.close()
+        return jsonify({'error': 'Yetkisiz erişim'}), 403
+    
+    # Oyuncunun aktivitelerini getir
+    activities = conn.execute('''
+        SELECT * FROM activities 
+        WHERE player_id = ? 
+        ORDER BY date DESC, created_at DESC
+    ''', (player_id,)).fetchall()
+    
+    conn.close()
+    return jsonify([dict(activity) for activity in activities])
 
 @app.route('/api/dashboard-stats')
 @login_required

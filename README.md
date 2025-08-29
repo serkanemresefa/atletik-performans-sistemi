@@ -125,7 +125,7 @@ python3 app.py
 - `DELETE /api/players/<id>` - Oyuncu sil
 
 ### **Performans Takibi**
-- `GET /api/activities` - Aktivite listesi
+- `GET /api/activities?player_id=<id>` - Oyuncu aktivite listesi
 - `POST /api/activities` - Yeni aktivite kaydet
 - `POST /api/analysis` - Performans analizi
 
@@ -143,18 +143,31 @@ python3 app.py
 - Kullanıcı bazlı veri izolasyonu
 - CSRF koruması
 
-## 🎨 Son Güncellemeler (v2.0)
+## 🎨 Son Güncellemeler (v2.1)
 
-### ✅ **Yeni Özellikler**
+### ✅ **Yeni Özellikler (v2.0)**
 - **Geliştirilmiş Takım Yönetimi:** Lig, sezon, antrenör bilgileri eklendi
 - **Yeniden Düzenlenmiş Arayüz:** 1️⃣ Mevcut Takımlar → 2️⃣ Takım Yönetimi → 3️⃣ Oyuncu Yönetimi
 - **Database Migration:** Otomatik veri tabanı güncelleme sistemi
 - **Antrenman Yönetimi:** Oyuncu ekleme kaldırıldı, sadece veri girişi odaklı
+
+### 🔧 **Bug Düzeltmeleri (v2.1)**
+- **Aktivite Görüntüleme Sorunu:** Frontend'de oyuncu performans geçmişi görüntülenemeyen bug düzeltildi
+- **API Endpoint Eksikliği:** `GET /api/activities?player_id=<id>` endpoint'i eklendi
+- **Örnek Veri Entegrasyonu:** 504 örnek aktivite verisi (28 oyuncu x 18 aktivite) sisteme entegre edildi
+- **Performans Geçmişi Modülü:** Oyuncu detay modalındaki "Performans Geçmişi" sekmesi artık çalışıyor
+
+### 🗃️ **Mevcut Örnek Veriler**
+- **2 Takım:** Fenerbahçe U19, Galatasaray A2
+- **28 Oyuncu:** Pozisyon bazlı dağılım (kaleci, defans, orta saha, forvet)
+- **504 Aktivite:** 30 günlük periyotta antrenman/maç verileri
+- **Gerçekçi Metrikler:** Pozisyon bazlı farklılaştırılmış performans değerleri
 
 ### 🔄 **Gelecek Geliştirmeler**
 - Excel import/export, PDF raporlama, mobil uygulama desteği
 
 ---
 
-**Versiyon:** 2.0  
-**Son Güncelleme:** 29 Ağustos 2025
+**Versiyon:** 2.1  
+**Son Güncelleme:** 29 Ağustos 2025  
+**Son Düzeltme:** Aktivite görüntüleme API endpoint'i düzeltildi
