@@ -1,27 +1,28 @@
 # ⚽ Atletik Performans Takip Sistemi
 
-Futbol oyuncularının antrenman ve maç performanslarını takip eden, analiz yapan modern web uygulaması.
+Futbol takımlarının oyuncu profillerini yönetip antrenman ve maç performanslarını takip eden profesyonel web uygulaması.
 
 ## 🎯 Proje Özeti
 
-Bu sistem, atletik performans antrenörleri için geliştirilmiş, oyuncuların günlük antrenman verilerini kaydedip maç performansıyla karşılaştırma yapabilen profesyonel bir araçtır.
+Bu sistem, atletik performans antrenörleri ve takım yöneticileri için geliştirilmiş kapsamlı bir takım yönetim platformudur. Detaylı oyuncu profilleri, antrenman veri takibi ve performans analizi özelliklerini tek bir arayüzde sunar.
 
-## 📊 Temel Özellikler
+## 📊 Ana Özellikler
 
-### ✅ **Tamamlanan Özellikler**
-- **Günlük Veri Girişi:** Oyuncu bazlı antrenman/maç verileri
-- **Otomatik Analiz:** Antrenman vs Maç yüklenme oranları (%100 referans)
-- **İnteraktif Grafikler:** Chart.js ile modern görselleştirme
-- **Responsive Tasarım:** Mobil ve masaüstü uyumlu
-- **RESTful API:** Modern backend mimari
-- **Gerçek Zamanlı Hesaplama:** Anında sonuçlar
+### ✅ **Kullanıcı Yönetimi**
+- **Güvenli Giriş:** Şifreli kullanıcı hesapları ve oturum yönetimi
+- **Kullanıcı Profili:** Kişisel bilgiler ve profil güncelleme
+- **Multi-User Destek:** Her kullanıcı kendi takımlarını yönetir
 
-### 📈 **Analiz Metrikleri**
-- **Toplam Mesafe:** Antrenman/maç karşılaştırması
-- **Hız Analizi:** 16+, 18+, 20+, 24+ km/h mesafeleri  
-- **İvmelenme Verileri:** Acc/Decc sayıları
-- **Metabolik Güç:** Yüksek yoğunluk mesafesi
-- **Yüzde Hesaplama:** (Antrenman Ort. ÷ Maç Ort.) × 100
+### 👥 **Takım Yönetimi**
+- **Takım Oluşturma:** Kullanıcı bazlı takım organizasyonu
+- **Detaylı Oyuncu Profilleri:** 22 ayrı bilgi alanı ile kapsamlı profil sistemi
+- **Oyuncu Kartları:** Görsel oyuncu yönetimi ve hızlı erişim
+
+### 📈 **Performans Takibi**
+- **Antrenman/Maç Verisi:** Oyuncu bazlı aktivite kayıtları
+- **Hız Analizi:** 16+, 18+, 20+, 24+ km/h mesafe takibi
+- **İvmelenme Metrikleri:** Detaylı hareket analizi
+- **Görsel Analiz:** İnteraktif grafik ve tablo raporları
 
 ## 🛠️ Teknoloji Stack
 
@@ -36,140 +37,124 @@ Bu sistem, atletik performans antrenörleri için geliştirilmiş, oyuncuların 
 - **Chart.js:** İnteraktif grafik kütüphanesi
 - **Gradient Design:** Profesyonel görünüm
 
-### **Deployment**
-- **Railway.app:** Cloud hosting platform
-- **GitHub:** Versiyon kontrolü ve CI/CD
-
 ## 🚀 Kurulum ve Çalıştırma
 
 ### **Yerel Geliştirme**
 ```bash
 # Projeyi klonla
-git clone https://github.com/YOURUSERNAME/atletik-performans-sistemi.git
+git clone [repository-url]
 cd atletik-performans-sistemi/web_app
 
 # Gerekli paketleri yükle
-pip install -r requirements.txt
+pip install flask flask-cors bcrypt
 
 # Uygulamayı çalıştır
-python app.py
+python3 app.py
 ```
 
-**Uygulama:** http://localhost:8080
-
-### **Railway Deployment**
-1. GitHub'a projeyi yükle
-2. Railway.app'te hesap aç
-3. "Deploy from GitHub" seç  
-4. Repository'yi bağla
-5. Otomatik deploy başlar
+**Uygulama:** http://localhost:8081  
+**Demo Giriş:** Kullanıcı: `demo` / Şifre: `demo123`
 
 ## 📱 Kullanım Rehberi
 
-### **1. Dashboard (📊)**
-- Genel istatistikler görüntüle
-- Son aktiviteleri takip et
-- Toplam oyuncu/antrenman/maç sayıları
+### **1. Profil Yönetimi (👤)**
+- Kullanıcı bilgilerini görüntüle
+- Profil güncellemeleri yap
+- Toplam takım istatistiklerini takip et
 
-### **2. Veri Girişi (➕)**
-- Oyuncu seç
-- Tarih ve aktivite türü belirle
-- Performans metriklerini gir:
-  - Süre ve mesafe
-  - Hız verileri (16+, 18+, 20+, 24+ km/h)
-  - İvmelenme sayıları
-  - Metabolik güç mesafesi
+### **2. Takım Yönetimi (👥)**
+- **Mevcut Takımlar:** Takım listesi ve istatistikleri
+- **Takım Oluşturma:** Ad, lig, sezon, antrenör bilgileri
+- **Oyuncu Yönetimi:** 22 alanlı detaylı profil sistemi
+  - Kişisel: Ad, soyad, doğum tarihi, uyruk, kan grubu
+  - Pozisyon: Ana/yan mevki, tercih edilen ayak, forma no
+  - Fiziksel: Boy, kilo, önceki kulüp, sözleşme detayları
+  - Sağlık: Sakatlık geçmişi, mevcut durum
+  - İletişim: Telefon, email, acil durum kişisi, notlar
 
-### **3. Analiz (📈)**
-- Çoklu oyuncu seçimi
-- Tarih aralığı belirleme
-- Otomatik yüzde hesaplamaları:
-  - **%100 üstü:** Antrenman > Maç (İyi)
-  - **%80-100:** Normal seviye
-  - **%80 altı:** Antrenman eksikliği
-- İnteraktif bar chart
-- Detaylı sonuç tablosu
+### **3. Antrenman Yönetimi (🏃‍♂️)**
+- Takım bazlı oyuncu listesi görüntüleme
+- Modal ile hızlı veri girişi:
+  - Tarih ve aktivite türü
+  - Performans metrikleri (süre, mesafe, hız)
+  - İvmelenme ve metabolik güç verileri
 
-### **4. Oyuncu Yönetimi (👥)**
-- Yeni oyuncu ekleme
-- Pozisyon belirleme
-- Oyuncu listesi görüntüleme
+### **4. Performans Analizi (📈)**
+- Çoklu oyuncu seçimi ve tarih filtreleme
+- Antrenman vs maç karşılaştırması
+- İnteraktif grafik ve detaylı tablolar
+- Yüzde bazlı performans değerlendirmesi
 
 ## 📋 Veri Yapısı
 
-### **Oyuncular (Players)**
-- ID, İsim, Pozisyon, Kayıt tarihi
+### **Kullanıcılar (Users)**
+- ID, kullanıcı adı, şifre (hash), email, ad/soyad
+
+### **Takımlar (Teams)**
+- ID, takım adı, lig, sezon, antrenör adı, açıklama, kullanıcı ID, oluşturma tarihi
+
+### **Oyuncular (Players) - 22 Alan**
+- **Temel:** ID, ad, soyad, doğum tarihi, uyruk
+- **Pozisyon:** Ana mevki, yan mevkiler, tercih edilen ayak, forma numarası
+- **Fiziksel:** Boy (cm), kilo (kg), kan grubu
+- **Geçmiş:** Önceki kulüp, kulüp geçmişi, sözleşme tarihleri
+- **Sağlık:** Sakatlık geçmişi, mevcut sakatlık durumu
+- **İletişim:** Telefon, email, acil durum kişisi, notlar
 
 ### **Aktiviteler (Activities)**
-- Oyuncu ID, Tarih, Tür (antrenman/maç)
-- Süre, Mesafe, Hız verileri
-- İvmelenme, Metabolik güç, Notlar
+- Oyuncu ID, tarih, tür (antrenman/maç)
+- Performans metrikleri: süre, mesafe, hız verileri
+- İvmelenme sayıları, metabolik güç, notlar
 
-### **Hesaplanmış Metrikler**
-- Ortalama değerler
-- Yüzde oranları
-- Karşılaştırma sonuçları
+## 🔧 Ana API Endpoints
 
-## 🔧 API Endpoints
+### **Kimlik Doğrulama**
+- `POST /login` - Kullanıcı girişi
+- `POST /logout` - Oturum kapatma
+- `POST /register` - Yeni kullanıcı kaydı
 
-### **Oyuncular**
-- `GET /api/players` - Oyuncu listesi
-- `POST /api/players` - Yeni oyuncu
+### **Takım Yönetimi**
+- `GET /api/teams` - Kullanıcının takımları
+- `POST /api/teams` - Yeni takım oluştur
+- `DELETE /api/teams/<id>` - Takım sil
 
-### **Aktiviteler** 
-- `GET /api/activities` - Aktivite listesi (filtrelenebilir)
-- `POST /api/activities` - Yeni aktivite
+### **Oyuncu Yönetimi**
+- `GET /api/players` - Takım oyuncuları
+- `POST /api/players` - Yeni oyuncu ekle
+- `PUT /api/players/<id>` - Oyuncu güncelle
+- `DELETE /api/players/<id>` - Oyuncu sil
 
-### **Analiz**
+### **Performans Takibi**
+- `GET /api/activities` - Aktivite listesi
+- `POST /api/activities` - Yeni aktivite kaydet
 - `POST /api/analysis` - Performans analizi
-- `GET /api/dashboard-stats` - Dashboard verileri
 
-## 📈 Proje Geliştirme Süreci
+## 🚀 Sistem Mimarisi
 
-### **Faz 1: Veri Analizi**
-- ✅ PDF dosyasından Excel çıktısı
-- ✅ Yüzde hesaplama mantığının analizi
-- ✅ Veri yapısının belirlenmesi
+### **4 Ana Modül**
+1. **Profil Yönetimi** - Kullanıcı hesap ve bilgi yönetimi
+2. **Takım Yönetimi** - Takım oluşturma ve detaylı oyuncu profilleri
+3. **Antrenman Yönetimi** - Performans veri girişi ve takibi
+4. **Analiz Modülü** - Grafik ve raporlama
 
-### **Faz 2: Streamlit Prototipi** 
-- ✅ Hızlı prototip geliştirme
-- ✅ Temel fonksiyonalite testi
-- ✅ Kullanıcı feedback alımı
+### **Güvenlik Özellikleri**
+- Bcrypt şifre hashleme
+- Session tabanlı kimlik doğrulama
+- Kullanıcı bazlı veri izolasyonu
+- CSRF koruması
 
-### **Faz 3: Web Uygulaması**
-- ✅ Flask backend geliştirme
-- ✅ Modern frontend tasarım
-- ✅ Chart.js grafik entegrasyonu
-- ✅ Responsive tasarım
+## 🎨 Son Güncellemeler (v2.0)
 
-### **Faz 4: Deployment**
-- ✅ Railway.app konfigürasyonu
-- ✅ GitHub entegrasyonu
-- ✅ Production hazırlığı
+### ✅ **Yeni Özellikler**
+- **Geliştirilmiş Takım Yönetimi:** Lig, sezon, antrenör bilgileri eklendi
+- **Yeniden Düzenlenmiş Arayüz:** 1️⃣ Mevcut Takımlar → 2️⃣ Takım Yönetimi → 3️⃣ Oyuncu Yönetimi
+- **Database Migration:** Otomatik veri tabanı güncelleme sistemi
+- **Antrenman Yönetimi:** Oyuncu ekleme kaldırıldı, sadece veri girişi odaklı
 
-## 🎨 Gelecek Geliştirmeler
-
-- [ ] **Radar Grafikleri:** Çok boyutlu performans analizi
-- [ ] **Excel Import/Export:** Toplu veri işleme
-- [ ] **Takım Karşılaştırması:** Grup analizleri
-- [ ] **Trend Analizi:** Zaman serisi grafikleri
-- [ ] **Push Notification:** Performans uyarıları
-- [ ] **Kullanıcı Yetkilendirmesi:** Multi-user support
-- [ ] **Yaralanma Takibi:** Sakatlık entegrasyonu
-
-## 📞 Destek ve İletişim
-
-- **GitHub Issues:** Hata bildirimleri ve önerilere
-- **Email:** Teknik destek için
-- **Documentation:** Detaylı kullanım kılavuzu
-
-## 📄 Lisans
-
-Bu proje MIT lisansı altında geliştirilmiştir.
+### 🔄 **Gelecek Geliştirmeler**
+- Excel import/export, PDF raporlama, mobil uygulama desteği
 
 ---
 
-**Geliştirici:** bukaa21  
-**Teknoloji Partner:** bukaa21 AI  
-**Versiyon:** 1.0  
-**Son Güncelleme:** Ağustos 2025
+**Versiyon:** 2.0  
+**Son Güncelleme:** 29 Ağustos 2025

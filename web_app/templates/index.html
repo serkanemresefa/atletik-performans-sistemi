@@ -271,26 +271,33 @@
             <h2>Takım & Oyuncu Yönetimi</h2>
             <div id="team-alert"></div>
             
-            <!-- Step 1: Team Creation -->
+            <!-- Step 1: Current Teams -->
             <div class="table-container">
-                <h3>1️⃣ Takım Oluşturma</h3>
+                <h3>1️⃣ Mevcut Takımlarınız</h3>
+                <table class="table"><thead><tr><th>Takım Adı</th><th>Lig</th><th>Sezon</th><th>Antrenör</th><th>Oyuncu Sayısı</th><th>Aksiyonlar</th></tr></thead><tbody id="teams-table"></tbody></table>
+            </div>
+            
+            <!-- Step 2: Team Management -->
+            <div class="table-container" style="margin-top: 30px;">
+                <h3>2️⃣ Takım Yönetimi</h3>
                 <form id="team-form">
                     <div class="form-row">
-                        <div class="form-group"><label for="team-name">Takım Adı</label><input type="text" id="team-name" class="form-control" required placeholder="örn: U17 Milli Takım"></div>
+                        <div class="form-group"><label for="team-name">Takım Adı *</label><input type="text" id="team-name" class="form-control" required placeholder="örn: U17 Milli Takım"></div>
+                        <div class="form-group"><label for="team-league">Lig</label><input type="text" id="team-league" class="form-control" placeholder="örn: Süper Lig"></div>
+                        <div class="form-group"><label for="team-season">Sezon</label><input type="text" id="team-season" class="form-control" placeholder="örn: 2024-2025"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label for="team-coach">Antrenör Adı</label><input type="text" id="team-coach" class="form-control" placeholder="örn: Ahmet Yılmaz"></div>
+                        <div class="form-group"><label for="team-description">Açıklama</label><textarea id="team-description" class="form-control" rows="2" placeholder="Takım hakkında notlar..."></textarea></div>
                     </div>
                     <button type="submit" class="btn">Takım Oluştur</button>
                 </form>
-                
-                <div style="margin-top: 20px;">
-                    <h4>Mevcut Takımlarınız</h4>
-                    <table class="table"><thead><tr><th>Takım Adı</th><th>Kayıt Tarihi</th><th>Oyuncu Sayısı</th><th>Aksiyonlar</th></tr></thead><tbody id="teams-table"></tbody></table>
-                </div>
             </div>
             
-            <!-- Step 2: Player Management -->
+            <!-- Step 3: Player Management -->
             <div class="table-container" style="margin-top: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>2️⃣ Oyuncu Yönetimi</h3>
+                    <h3>3️⃣ Oyuncu Yönetimi</h3>
                     <div>
                         <label for="team-management-select" style="margin-right: 10px;">Takım Seç:</label>
                         <select id="team-management-select" class="form-control" style="display: inline-block; width: auto; min-width: 200px;" onchange="handleTeamManagementChange()">
@@ -675,41 +682,20 @@
             });
         }
 
-        document.getElementById('player-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            const name = document.getElementById('player-name').value;
-            const position = document.getElementById('player-position').value;
-            if (!currentTeamId) {
-                showAlert('player-alert', 'error', 'Önce bir takım seçmelisiniz.');
-                return;
-            }
-            try {
-                const response = await fetch('/api/players', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, position, team_id: currentTeamId })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showAlert('player-alert', 'success', 'Oyuncu eklendi.');
-                    e.target.reset();
-                    loadPlayers();
-                } else {
-                    showAlert('player-alert', 'error', data.error);
-                }
-            } catch (error) {
-                console.error('Error adding player:', error);
-            }
-        });
 
         document.getElementById('team-form').addEventListener('submit', async e => {
             e.preventDefault();
             const name = document.getElementById('team-name').value;
+            const league = document.getElementById('team-league').value;
+            const season = document.getElementById('team-season').value;
+            const coach_name = document.getElementById('team-coach').value;
+            const description = document.getElementById('team-description').value;
+            
             try {
                 const response = await fetch('/api/teams', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name, league, season, coach_name, description })
                 });
                 const data = await response.json();
                 if (response.ok) {
@@ -730,7 +716,7 @@
             const tbody = document.getElementById('teams-table');
             tbody.innerHTML = '';
             if(teams.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="loading">Takım yok.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">Takım yok.</td></tr>';
                 return;
             } 
             
@@ -749,7 +735,23 @@
                     console.error('Error loading player count:', error);
                 }
                 
-                rowsHTML += `<tr><td><span id="team-name-${t.id}">${t.name}</span><input type="text" id="team-edit-${t.id}" value="${t.name}" class="form-control" style="display:none;"></td><td>${new Date(t.created_at).toLocaleDateString('tr-TR')}</td><td>${playerCount} oyuncu</td><td><button class="btn btn-sm" onclick="editTeam(${t.id})" id="team-edit-btn-${t.id}" style="margin-right: 5px;">Düzenle</button><button class="btn btn-sm btn-success" onclick="saveTeam(${t.id})" id="team-save-btn-${t.id}" style="display:none; margin-right: 5px;">Kaydet</button><button class="btn btn-sm" onclick="cancelEditTeam(${t.id})" id="team-cancel-btn-${t.id}" style="display:none; margin-right: 5px;">İptal</button><button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id}, '${t.name}')">Sil</button></td></tr>`;
+                const league = t.league || '-';
+                const season = t.season || '-';
+                const coach = t.coach_name || '-';
+                
+                rowsHTML += `<tr>
+                    <td><span id="team-name-${t.id}">${t.name}</span><input type="text" id="team-edit-${t.id}" value="${t.name}" class="form-control" style="display:none;"></td>
+                    <td>${league}</td>
+                    <td>${season}</td>
+                    <td>${coach}</td>
+                    <td>${playerCount} oyuncu</td>
+                    <td>
+                        <button class="btn btn-sm" onclick="editTeam(${t.id})" id="team-edit-btn-${t.id}" style="margin-right: 5px;">Düzenle</button>
+                        <button class="btn btn-sm btn-success" onclick="saveTeam(${t.id})" id="team-save-btn-${t.id}" style="display:none; margin-right: 5px;">Kaydet</button>
+                        <button class="btn btn-sm" onclick="cancelEditTeam(${t.id})" id="team-cancel-btn-${t.id}" style="display:none; margin-right: 5px;">İptal</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTeam(${t.id}, '${t.name}')">Sil</button>
+                    </td>
+                </tr>`;
             }
             tbody.innerHTML = rowsHTML;
         }

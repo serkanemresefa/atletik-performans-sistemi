@@ -38,10 +38,32 @@ def init_database():
         conn_check = get_db_connection()
         try:
             users_count = conn_check.execute('SELECT COUNT(id) FROM users').fetchone()[0]
-            conn_check.close()
+            
             if users_count > 0:
-                print("Database already exists and has users. Skipping initialization.")
-                return
+                # Check if teams table needs migration
+                try:
+                    conn_check.execute('SELECT league FROM teams LIMIT 1')
+                    print("Database already exists and has users. Skipping initialization.")
+                    conn_check.close()
+                    return
+                except sqlite3.OperationalError:
+                    # Teams table needs migration
+                    print("Migrating teams table...")
+                    try:
+                        conn_check.execute('ALTER TABLE teams ADD COLUMN league TEXT')
+                        conn_check.execute('ALTER TABLE teams ADD COLUMN season TEXT') 
+                        conn_check.execute('ALTER TABLE teams ADD COLUMN coach_name TEXT')
+                        conn_check.execute('ALTER TABLE teams ADD COLUMN description TEXT')
+                        conn_check.commit()
+                        print("Teams table migrated successfully.")
+                    except sqlite3.OperationalError as e:
+                        if "duplicate column name" in str(e).lower():
+                            print("Teams table columns already exist.")
+                        else:
+                            raise e
+                    conn_check.close()
+                    return
+                    
         except sqlite3.OperationalError:
             # Henüz users tablosu yok, init devam etsin
             pass
@@ -62,6 +84,10 @@ def init_database():
         CREATE TABLE IF NOT EXISTS teams (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            league TEXT,
+            season TEXT,
+            coach_name TEXT,
+            description TEXT,
             user_id INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id),
@@ -301,11 +327,17 @@ def handle_teams():
     if request.method == 'POST':
         data = request.json
         name = data.get('name')
+        league = data.get('league', '')
+        season = data.get('season', '')
+        coach_name = data.get('coach_name', '')
+        description = data.get('description', '')
+        
         if not name:
             conn.close()
             return jsonify({'error': 'Takım adı gerekli'}), 400
         try:
-            cursor = conn.execute('INSERT INTO teams (name, user_id) VALUES (?, ?)', (name, user_id))
+            cursor = conn.execute('INSERT INTO teams (name, league, season, coach_name, description, user_id) VALUES (?, ?, ?, ?, ?, ?)', 
+                                (name, league, season, coach_name, description, user_id))
             conn.commit()
             team_id = cursor.lastrowid
             conn.close()
