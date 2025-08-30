@@ -43,7 +43,24 @@ def init_database():
                 # Check if teams table needs migration
                 try:
                     conn_check.execute('SELECT league FROM teams LIMIT 1')
-                    print("Database already exists and has users. Skipping initialization.")
+                    
+                    # Check if activities table needs time column
+                    try:
+                        conn_check.execute('SELECT activity_time FROM activities LIMIT 1')
+                        print("Database already exists and has users. Skipping initialization.")
+                    except sqlite3.OperationalError:
+                        # Activities table needs time column migration
+                        print("Migrating activities table to add time column...")
+                        try:
+                            conn_check.execute('ALTER TABLE activities ADD COLUMN activity_time TIME')
+                            conn_check.commit()
+                            print("Activities table migrated successfully - added activity_time column.")
+                        except sqlite3.OperationalError as e:
+                            if "duplicate column name" in str(e).lower():
+                                print("Activities time column already exists.")
+                            else:
+                                raise e
+                    
                     conn_check.close()
                     return
                 except sqlite3.OperationalError:
@@ -61,6 +78,23 @@ def init_database():
                             print("Teams table columns already exist.")
                         else:
                             raise e
+                    
+                    # After teams migration, check for activities time column
+                    try:
+                        conn_check.execute('SELECT activity_time FROM activities LIMIT 1')
+                    except sqlite3.OperationalError:
+                        # Activities table needs time column migration
+                        print("Migrating activities table to add time column...")
+                        try:
+                            conn_check.execute('ALTER TABLE activities ADD COLUMN activity_time TIME')
+                            conn_check.commit()
+                            print("Activities table migrated successfully - added activity_time column.")
+                        except sqlite3.OperationalError as e:
+                            if "duplicate column name" in str(e).lower():
+                                print("Activities time column already exists.")
+                            else:
+                                raise e
+                    
                     conn_check.close()
                     return
                     
@@ -128,12 +162,37 @@ def init_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             player_id INTEGER NOT NULL,
             date DATE NOT NULL,
+            activity_time TIME,
             activity_type TEXT NOT NULL CHECK (activity_type IN ('training', 'match')),
             duration_minutes INTEGER, total_distance_m INTEGER,
             high_speed_16kmh_m INTEGER, high_speed_18kmh_m INTEGER,
             high_speed_20kmh_m INTEGER, sprint_24kmh_m INTEGER,
             acc_decc_count INTEGER, high_acc_decc_count INTEGER,
             high_metabolic_power_m INTEGER, notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player_id) REFERENCES players (id)
+        )
+        ''')
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS weight_measurements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id INTEGER NOT NULL,
+            weight_kg REAL NOT NULL,
+            measurement_date DATE NOT NULL,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (player_id) REFERENCES players (id)
+        )
+        ''')
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS injury_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id INTEGER NOT NULL,
+            injury_date DATE NOT NULL,
+            injury_type TEXT NOT NULL,
+            description TEXT,
+            recovery_date DATE,
+            status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'recovered')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (player_id) REFERENCES players (id)
         )
@@ -951,11 +1010,11 @@ def add_activity():
         return jsonify({'error': 'Yetkisiz erişim'}), 403
     
     conn.execute('''
-    INSERT INTO activities (player_id, date, activity_type, duration_minutes, total_distance_m, high_speed_16kmh_m, high_speed_18kmh_m, high_speed_20kmh_m, sprint_24kmh_m, acc_decc_count, high_acc_decc_count, high_metabolic_power_m, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO activities (player_id, date, activity_time, activity_type, duration_minutes, total_distance_m, high_speed_16kmh_m, high_speed_18kmh_m, high_speed_20kmh_m, sprint_24kmh_m, acc_decc_count, high_acc_decc_count, high_metabolic_power_m, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
-        data['player_id'], data['date'], data['activity_type'],
-        data.get('duration_minutes'), data.get('total_distance_m'),
+        data['player_id'], data['date'], data.get('activity_time'),
+        data['activity_type'], data.get('duration_minutes'), data.get('total_distance_m'),
         data.get('high_speed_16kmh_m'), data.get('high_speed_18kmh_m'),
         data.get('high_speed_20kmh_m'), data.get('sprint_24kmh_m'),
         data.get('acc_decc_count'), data.get('high_acc_decc_count'),
@@ -991,11 +1050,91 @@ def get_activities():
     activities = conn.execute('''
         SELECT * FROM activities 
         WHERE player_id = ? 
-        ORDER BY date DESC, created_at DESC
+        ORDER BY date DESC, activity_time DESC, created_at DESC
     ''', (player_id,)).fetchall()
     
     conn.close()
     return jsonify([dict(activity) for activity in activities])
+
+@app.route('/api/activities/<int:activity_id>', methods=['PUT', 'DELETE'])
+@login_required
+def handle_activity(activity_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Verify activity belongs to user's team
+    activity_check = conn.execute('''
+        SELECT a.*, p.id as player_id FROM activities a
+        JOIN players p ON a.player_id = p.id
+        JOIN teams t ON p.team_id = t.id
+        WHERE a.id = ? AND t.user_id = ?
+    ''', (activity_id, user_id)).fetchone()
+    
+    if not activity_check:
+        conn.close()
+        return jsonify({'error': 'Activity not found or unauthorized'}), 404
+    
+    if request.method == 'DELETE':
+        # Delete activity
+        conn.execute('DELETE FROM activities WHERE id = ?', (activity_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Activity deleted successfully'})
+    
+    elif request.method == 'PUT':
+        # Update activity
+        data = request.json or {}
+        
+        # Build dynamic update query
+        update_fields = []
+        params = []
+        
+        if 'date' in data:
+            update_fields.append('date = ?')
+            params.append(data['date'])
+        
+        if 'activity_time' in data:
+            update_fields.append('activity_time = ?')
+            params.append(data['activity_time'])
+            
+        if 'activity_type' in data:
+            if data['activity_type'] not in ['training', 'match']:
+                conn.close()
+                return jsonify({'error': 'Invalid activity type'}), 400
+            update_fields.append('activity_type = ?')
+            params.append(data['activity_type'])
+        
+        # Add all other numeric fields
+        numeric_fields = [
+            'duration_minutes', 'total_distance_m', 'high_speed_16kmh_m', 
+            'high_speed_18kmh_m', 'high_speed_20kmh_m', 'sprint_24kmh_m',
+            'acc_decc_count', 'high_acc_decc_count', 'high_metabolic_power_m'
+        ]
+        
+        for field in numeric_fields:
+            if field in data:
+                update_fields.append(f'{field} = ?')
+                params.append(data[field])
+        
+        if 'notes' in data:
+            update_fields.append('notes = ?')
+            params.append(data['notes'])
+        
+        if not update_fields:
+            conn.close()
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        params.append(activity_id)
+        query = f'UPDATE activities SET {", ".join(update_fields)} WHERE id = ?'
+        
+        try:
+            conn.execute(query, params)
+            conn.commit()
+            conn.close()
+            return jsonify({'message': 'Activity updated successfully'})
+        except Exception as e:
+            conn.close()
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/dashboard-stats')
 @login_required
@@ -1192,6 +1331,222 @@ def get_analysis():
         'match': summary_match,
         'ratios': summary_ratios
     }})
+
+# Weight Measurements API
+@app.route('/api/players/<int:player_id>/weight-measurements', methods=['GET'])
+@login_required
+def get_weight_measurements(player_id):
+    """Get weight measurement history for a player"""
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    
+    # Verify player belongs to user's team
+    player = conn.execute('''
+        SELECT p.id FROM players p
+        JOIN teams t ON p.team_id = t.id
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Player not found'}), 404
+    
+    measurements = conn.execute('''
+        SELECT id, weight_kg, measurement_date, notes, created_at
+        FROM weight_measurements
+        WHERE player_id = ?
+        ORDER BY measurement_date DESC
+    ''', (player_id,)).fetchall()
+    
+    conn.close()
+    return jsonify([dict(row) for row in measurements])
+
+@app.route('/api/players/<int:player_id>/weight-measurements', methods=['POST'])
+@login_required
+def add_weight_measurement(player_id):
+    """Add a new weight measurement for a player"""
+    user_id = session['user_id']
+    data = request.json or {}
+    
+    weight_kg = data.get('weight_kg')
+    measurement_date = data.get('measurement_date')
+    notes = data.get('notes', '')
+    
+    if not weight_kg or not measurement_date:
+        return jsonify({'error': 'Weight and measurement date are required'}), 400
+    
+    conn = get_db_connection()
+    
+    # Verify player belongs to user's team
+    player = conn.execute('''
+        SELECT p.id FROM players p
+        JOIN teams t ON p.team_id = t.id
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Player not found'}), 404
+    
+    try:
+        cursor = conn.execute('''
+            INSERT INTO weight_measurements (player_id, weight_kg, measurement_date, notes)
+            VALUES (?, ?, ?, ?)
+        ''', (player_id, weight_kg, measurement_date, notes))
+        
+        measurement_id = cursor.lastrowid
+        
+        # Update player's current weight
+        conn.execute('''
+            UPDATE players SET weight_kg = ? WHERE id = ?
+        ''', (weight_kg, player_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'id': measurement_id, 'message': 'Weight measurement added successfully'})
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+# Injury Records API
+@app.route('/api/players/<int:player_id>/injury-records', methods=['GET'])
+@login_required
+def get_injury_records(player_id):
+    """Get injury records for a player"""
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    
+    # Verify player belongs to user's team
+    player = conn.execute('''
+        SELECT p.id FROM players p
+        JOIN teams t ON p.team_id = t.id
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Player not found'}), 404
+    
+    injuries = conn.execute('''
+        SELECT id, injury_date, injury_type, description, recovery_date, status, created_at
+        FROM injury_records
+        WHERE player_id = ?
+        ORDER BY injury_date DESC
+    ''', (player_id,)).fetchall()
+    
+    conn.close()
+    return jsonify([dict(row) for row in injuries])
+
+@app.route('/api/players/<int:player_id>/injury-records', methods=['POST'])
+@login_required
+def add_injury_record(player_id):
+    """Add a new injury record for a player"""
+    user_id = session['user_id']
+    data = request.json or {}
+    
+    injury_date = data.get('injury_date')
+    injury_type = data.get('injury_type')
+    description = data.get('description', '')
+    recovery_date = data.get('recovery_date')
+    status = data.get('status', 'active')
+    
+    if not injury_date or not injury_type:
+        return jsonify({'error': 'Injury date and type are required'}), 400
+    
+    if status not in ['active', 'recovered']:
+        return jsonify({'error': 'Status must be active or recovered'}), 400
+    
+    conn = get_db_connection()
+    
+    # Verify player belongs to user's team
+    player = conn.execute('''
+        SELECT p.id FROM players p
+        JOIN teams t ON p.team_id = t.id
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player:
+        conn.close()
+        return jsonify({'error': 'Player not found'}), 404
+    
+    try:
+        cursor = conn.execute('''
+            INSERT INTO injury_records (player_id, injury_date, injury_type, description, recovery_date, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (player_id, injury_date, injury_type, description, recovery_date, status))
+        
+        injury_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'id': injury_id, 'message': 'Injury record added successfully'})
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/players/<int:player_id>/injury-records/<int:injury_id>', methods=['PUT'])
+@login_required
+def update_injury_record(player_id, injury_id):
+    """Update an injury record (e.g., mark as recovered)"""
+    user_id = session['user_id']
+    data = request.json or {}
+    
+    conn = get_db_connection()
+    
+    # Verify player belongs to user's team and injury exists
+    injury = conn.execute('''
+        SELECT ir.id FROM injury_records ir
+        JOIN players p ON ir.player_id = p.id
+        JOIN teams t ON p.team_id = t.id
+        WHERE ir.id = ? AND p.id = ? AND t.user_id = ?
+    ''', (injury_id, player_id, user_id)).fetchone()
+    
+    if not injury:
+        conn.close()
+        return jsonify({'error': 'Injury record not found'}), 404
+    
+    # Update fields
+    recovery_date = data.get('recovery_date')
+    status = data.get('status')
+    description = data.get('description')
+    
+    try:
+        # Build dynamic update query
+        update_fields = []
+        params = []
+        
+        if recovery_date is not None:
+            update_fields.append('recovery_date = ?')
+            params.append(recovery_date)
+            
+        if status is not None:
+            if status not in ['active', 'recovered']:
+                conn.close()
+                return jsonify({'error': 'Status must be active or recovered'}), 400
+            update_fields.append('status = ?')
+            params.append(status)
+            
+        if description is not None:
+            update_fields.append('description = ?')
+            params.append(description)
+        
+        if update_fields:
+            params.append(injury_id)
+            query = f'UPDATE injury_records SET {", ".join(update_fields)} WHERE id = ?'
+            conn.execute(query, params)
+            conn.commit()
+        
+        conn.close()
+        return jsonify({'message': 'Injury record updated successfully'})
+        
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     init_database()

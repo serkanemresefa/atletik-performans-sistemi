@@ -525,6 +525,7 @@
                     <button class="detail-tab active" onclick="showDetailTab('personal')" id="tab-personal">Kişisel Bilgiler</button>
                     <button class="detail-tab" onclick="showDetailTab('performance')" id="tab-performance">Performans Geçmişi</button>
                     <button class="detail-tab" onclick="showDetailTab('stats')" id="tab-stats">İstatistikler</button>
+                    <button class="detail-tab" onclick="showDetailTab('data-entry')" id="tab-data-entry">Veri Girişi</button>
                 </div>
 
                 <!-- Tab Contents -->
@@ -607,9 +608,13 @@
                                 <input type="number" id="edit-height-cm" class="edit-mode form-control" style="display: none;" min="150" max="220">
                             </div>
                             <div class="detail-item">
-                                <label>Kilo (kg):</label>
+                                <label>Güncel Kilo (kg):</label>
                                 <span id="view-weight-kg" class="view-mode">-</span>
-                                <input type="number" id="edit-weight-kg" class="edit-mode form-control" style="display: none;" step="0.1" min="40" max="120">
+                                <div class="edit-mode" style="display: none;">
+                                    <button type="button" class="btn btn-sm" onclick="showWeightHistoryModal()" style="background: #28a745; color: white; margin-top: 5px;">
+                                        📊 Kilo Geçmişi
+                                    </button>
+                                </div>
                             </div>
                             <div class="detail-item">
                                 <label>Kan Grubu:</label>
@@ -684,9 +689,13 @@
                     <div class="detail-section">
                         <h4>Sakatlık Geçmişi & Notlar</h4>
                         <div class="detail-full-width">
-                            <label>Sakatlık Geçmişi:</label>
-                            <div id="view-injury-history" class="view-mode" style="margin-top: 5px;">-</div>
-                            <textarea id="edit-injury-history" class="edit-mode form-control" style="display: none;" rows="3"></textarea>
+                            <label>Sakatlık Durumu:</label>
+                            <div id="view-injury-status" class="view-mode" style="margin-top: 5px;">Aktif sakatlık bulunmuyor</div>
+                            <div class="edit-mode" style="display: none;">
+                                <button type="button" class="btn btn-sm" onclick="showInjuryHistoryModal()" style="background: #dc3545; color: white; margin-top: 5px;">
+                                    🏥 Sakatlık Geçmişi
+                                </button>
+                            </div>
                         </div>
                         <div class="detail-full-width">
                             <label>Notlar:</label>
@@ -719,6 +728,293 @@
                         </div>
                     </div>
                 </div>
+                <div id="detail-content-data-entry" class="detail-tab-content" style="display: none;">
+                    <div class="detail-section">
+                        <h4>Antrenman/Maç Verisi Ekle</h4>
+                        <form id="player-detail-activity-form">
+                            <div id="player-detail-modal-alert" class="alert" style="display: none;"></div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="player-detail-activity-date">Tarih</label>
+                                    <input type="date" id="player-detail-activity-date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-activity-time">Saat</label>
+                                    <input type="time" id="player-detail-activity-time" class="form-control" placeholder="Opsiyonel">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-activity-type">Aktivite Türü</label>
+                                    <select id="player-detail-activity-type" class="form-control" required>
+                                        <option value="">Seçin...</option>
+                                        <option value="training">Antrenman</option>
+                                        <option value="match">Maç</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="player-detail-duration">Süre (dk)</label>
+                                    <input type="number" id="player-detail-duration" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-distance">Toplam Mesafe (m)</label>
+                                    <input type="number" id="player-detail-distance" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-hs16">16+ km/h Mesafe (m)</label>
+                                    <input type="number" id="player-detail-hs16" class="form-control" min="0" step="1">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="player-detail-hs18">18+ km/h Mesafe (m)</label>
+                                    <input type="number" id="player-detail-hs18" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-hs20">20+ km/h Mesafe (m)</label>
+                                    <input type="number" id="player-detail-hs20" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-hs24">24+ km/h Mesafe (m)</label>
+                                    <input type="number" id="player-detail-hs24" class="form-control" min="0" step="1">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="player-detail-sprint-count">Sprint Sayısı</label>
+                                    <input type="number" id="player-detail-sprint-count" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-acc-count">İvmelenme Sayısı</label>
+                                    <input type="number" id="player-detail-acc-count" class="form-control" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-dec-count">Yavaşlama Sayısı</label>
+                                    <input type="number" id="player-detail-dec-count" class="form-control" min="0" step="1">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="player-detail-metabolic-power">Metabolik Güç</label>
+                                    <input type="number" id="player-detail-metabolic-power" class="form-control" min="0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="player-detail-notes">Notlar</label>
+                                    <textarea id="player-detail-notes" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button type="submit" class="btn btn-success">Aktivite Kaydet</button>
+                                <button type="button" class="btn" onclick="resetPlayerDetailForm()" style="margin-left: 10px;">Formu Temizle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Weight History Modal -->
+    <div id="weight-history-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="weight-history-title">Kilo Geçmişi</h3>
+                <span class="close" onclick="closeWeightHistoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Add New Weight Form -->
+                <div class="detail-section">
+                    <h4>Yeni Kilo Ölçümü Ekle</h4>
+                    <form id="weight-form">
+                        <div id="weight-modal-alert" class="alert" style="display: none;"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="weight-date">Ölçüm Tarihi</label>
+                                <input type="date" id="weight-date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="weight-value">Kilo (kg)</label>
+                                <input type="number" id="weight-value" class="form-control" step="0.1" min="40" max="150" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="weight-notes">Notlar</label>
+                                <input type="text" id="weight-notes" class="form-control" placeholder="Opsiyonel notlar">
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <button type="submit" class="btn btn-success">Ölçüm Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Weight History Table -->
+                <div class="detail-section">
+                    <h4>Kilo Geçmişi</h4>
+                    <div id="weight-history-table">
+                        <div class="loading">Kilo geçmişi yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Injury History Modal -->
+    <div id="injury-history-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 id="injury-history-title">Sakatlık Geçmişi</h3>
+                <span class="close" onclick="closeInjuryHistoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Add New Injury Form -->
+                <div class="detail-section">
+                    <h4>Yeni Sakatlık Kaydı Ekle</h4>
+                    <form id="injury-form">
+                        <div id="injury-modal-alert" class="alert" style="display: none;"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="injury-date">Sakatlık Tarihi</label>
+                                <input type="date" id="injury-date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="injury-type">Sakatlık Türü</label>
+                                <select id="injury-type" class="form-control" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option value="Kas">Kas Sakatlığı</option>
+                                    <option value="Bağ">Bağ Sakatlığı</option>
+                                    <option value="Eklem">Eklem Sakatlığı</option>
+                                    <option value="Kırık">Kırık</option>
+                                    <option value="Çıkık">Çıkık</option>
+                                    <option value="Burkulma">Burkulma</option>
+                                    <option value="Diğer">Diğer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="injury-status">Durum</label>
+                                <select id="injury-status" class="form-control" required>
+                                    <option value="active">Aktif</option>
+                                    <option value="recovered">İyileşmiş</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="injury-recovery-date">İyileşme Tarihi</label>
+                                <input type="date" id="injury-recovery-date" class="form-control">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="injury-description">Açıklama</label>
+                                <textarea id="injury-description" class="form-control" rows="3" placeholder="Sakatlığın detayları..."></textarea>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <button type="submit" class="btn btn-success">Sakatlık Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Injury History Table -->
+                <div class="detail-section">
+                    <h4>Sakatlık Geçmişi</h4>
+                    <div id="injury-history-table">
+                        <div class="loading">Sakatlık geçmişi yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Edit Modal -->
+    <div id="activity-edit-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="activity-edit-title">Aktivite Düzenle</h3>
+                <span class="close" onclick="closeActivityEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="activity-edit-form">
+                    <input type="hidden" id="edit-activity-id">
+                    <div id="activity-edit-modal-alert" class="alert" style="display: none;"></div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-activity-date">Tarih</label>
+                            <input type="date" id="edit-activity-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-activity-time">Saat</label>
+                            <input type="time" id="edit-activity-time" class="form-control" placeholder="Opsiyonel">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-activity-type">Aktivite Türü</label>
+                            <select id="edit-activity-type" class="form-control" required>
+                                <option value="training">Antrenman</option>
+                                <option value="match">Maç</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-duration">Süre (dk)</label>
+                            <input type="number" id="edit-duration" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-distance">Toplam Mesafe (m)</label>
+                            <input type="number" id="edit-distance" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-hs16">16+ km/h Mesafe (m)</label>
+                            <input type="number" id="edit-hs16" class="form-control" min="0" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-hs18">18+ km/h Mesafe (m)</label>
+                            <input type="number" id="edit-hs18" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-hs20">20+ km/h Mesafe (m)</label>
+                            <input type="number" id="edit-hs20" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-hs24">24+ km/h Mesafe (m)</label>
+                            <input type="number" id="edit-hs24" class="form-control" min="0" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-sprint-count">Sprint Sayısı</label>
+                            <input type="number" id="edit-sprint-count" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-acc-count">İvmelenme Sayısı</label>
+                            <input type="number" id="edit-acc-count" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-dec-count">Yavaşlama Sayısı</label>
+                            <input type="number" id="edit-dec-count" class="form-control" min="0" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-metabolic-power">Metabolik Güç</label>
+                            <input type="number" id="edit-metabolic-power" class="form-control" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-activity-notes">Notlar</label>
+                            <textarea id="edit-activity-notes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="submit" class="btn btn-success">Aktivite Güncelle</button>
+                        <button type="button" class="btn" onclick="closeActivityEditModal()" style="margin-left: 10px;">İptal</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -769,7 +1065,6 @@
             event.currentTarget.classList.add('active');
             if(tabName === 'team-management') {
                 loadTeamsTable();
-                loadTeamManagementDropdown();
             }
             
             const tabMessages = {
@@ -912,7 +1207,7 @@
                     const fullName = p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'İsimsiz Oyuncu';
                     const position = p.primary_position || p.position || '-';
                     
-                    tbody.innerHTML += `<tr><td>${fullName}</td><td>${position}</td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td><td><button class="btn btn-sm" onclick="openPlayerDetailModal(${p.id})" style="margin-right: 5px;">Detay</button><button class="btn btn-sm btn-success" onclick="openDataEntryModal(${p.id}, '${fullName}')" style="margin-right: 5px;">Veri Gir</button><button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id}, '${fullName}')">Sil</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${fullName}</td><td>${position}</td><td>${new Date(p.created_at).toLocaleDateString('tr-TR')}</td><td><button class="btn btn-sm" onclick="openPlayerDetailModal(${p.id})" style="margin-right: 5px;">Detay</button><button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id}, '${fullName}')">Sil</button></td></tr>`;
                 });
             }
         }
@@ -1180,6 +1475,91 @@
                 closeDataEntryModal();
             }
         }
+        
+        // Player Detail Modal Data Entry Functions
+        function resetPlayerDetailForm() {
+            document.getElementById('player-detail-activity-form').reset();
+            document.getElementById('player-detail-activity-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('player-detail-modal-alert').style.display = 'none';
+        }
+        
+        function showPlayerDetailAlert(type, message) {
+            const container = document.getElementById('player-detail-modal-alert');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            container.style.display = 'block';
+            setTimeout(() => {
+                if (type !== 'success') container.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Player Detail Modal Form Handler
+        document.getElementById('player-detail-activity-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            
+            if (!currentPlayerData) {
+                showPlayerDetailAlert('error', 'Oyuncu bilgisi bulunamadı.');
+                return;
+            }
+            
+            const date = document.getElementById('player-detail-activity-date').value;
+            const activityType = document.getElementById('player-detail-activity-type').value;
+            
+            if (!date || !activityType) {
+                showPlayerDetailAlert('error', 'Lütfen tarih ve aktivite türünü seçin.');
+                return;
+            }
+            
+            const toInt = v => {
+                const parsed = parseInt(v, 10);
+                return isNaN(parsed) ? null : parsed;
+            };
+            
+            const data = {
+                player_id: currentPlayerData.id,
+                date: date,
+                activity_time: document.getElementById('player-detail-activity-time').value || null,
+                activity_type: activityType,
+                duration_minutes: toInt(document.getElementById('player-detail-duration').value),
+                total_distance_m: toInt(document.getElementById('player-detail-distance').value),
+                high_speed_16kmh_m: toInt(document.getElementById('player-detail-hs16').value),
+                high_speed_18kmh_m: toInt(document.getElementById('player-detail-hs18').value),
+                high_speed_20kmh_m: toInt(document.getElementById('player-detail-hs20').value),
+                high_speed_24kmh_m: toInt(document.getElementById('player-detail-hs24').value),
+                sprint_count: toInt(document.getElementById('player-detail-sprint-count').value),
+                acc_count: toInt(document.getElementById('player-detail-acc-count').value),
+                dec_count: toInt(document.getElementById('player-detail-dec-count').value),
+                metabolic_power: parseFloat(document.getElementById('player-detail-metabolic-power').value) || null,
+                notes: document.getElementById('player-detail-notes').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/activities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    showPlayerDetailAlert('success', 'Aktivite başarıyla kaydedildi!');
+                    resetPlayerDetailForm();
+                    // Refresh performance and stats tabs if they are visible
+                    if (document.getElementById('tab-performance').classList.contains('active')) {
+                        loadPlayerActivities(currentPlayerData.id);
+                    }
+                    if (document.getElementById('tab-stats').classList.contains('active')) {
+                        loadPlayerStats(currentPlayerData.id);
+                    }
+                    setTimeout(() => {
+                        document.getElementById('player-detail-modal-alert').style.display = 'none';
+                    }, 3000);
+                } else {
+                    showPlayerDetailAlert('error', resData.error || 'Aktivite kaydedilirken hata oluştu');
+                }
+            } catch (err) {
+                console.error('Error adding activity:', err);
+                showPlayerDetailAlert('error', 'Sunucu hatası oluştu');
+            }
+        });
 
         // Team Edit/Delete Functions
         function editTeam(teamId) {
@@ -1602,7 +1982,7 @@
             document.getElementById('view-contract-start').textContent = player.contract_start ? new Date(player.contract_start).toLocaleDateString('tr-TR') : '-';
             document.getElementById('view-contract-end').textContent = player.contract_end ? new Date(player.contract_end).toLocaleDateString('tr-TR') : '-';
             document.getElementById('view-club-history').textContent = player.club_history || '-';
-            document.getElementById('view-injury-history').textContent = player.injury_history || '-';
+            // Injury status will be loaded dynamically when injury modal is opened
             document.getElementById('view-notes').textContent = player.notes || '-';
             
             // Populate edit fields
@@ -1615,7 +1995,7 @@
             document.getElementById('edit-preferred-foot').value = player.preferred_foot || '';
             document.getElementById('edit-jersey-number').value = player.jersey_number || '';
             document.getElementById('edit-height-cm').value = player.height_cm || '';
-            document.getElementById('edit-weight-kg').value = player.weight_kg || '';
+            // Weight is managed through separate weight history system
             document.getElementById('edit-blood-type').value = player.blood_type || '';
             document.getElementById('edit-current-injury-status').value = player.current_injury_status || '';
             document.getElementById('edit-phone').value = player.phone || '';
@@ -1625,7 +2005,7 @@
             document.getElementById('edit-contract-start').value = player.contract_start || '';
             document.getElementById('edit-contract-end').value = player.contract_end || '';
             document.getElementById('edit-club-history').value = player.club_history || '';
-            document.getElementById('edit-injury-history').value = player.injury_history || '';
+            // Injury history is now managed separately
             document.getElementById('edit-notes').value = player.notes || '';
         }
         
@@ -1651,6 +2031,9 @@
                 loadPlayerActivities(currentPlayerData.id);
             } else if (tabName === 'stats' && currentPlayerData) {
                 loadPlayerStats(currentPlayerData.id);
+            } else if (tabName === 'data-entry' && currentPlayerData) {
+                // Initialize data entry form
+                resetPlayerDetailForm();
             }
         }
         
@@ -1693,7 +2076,7 @@
                     preferred_foot: document.getElementById('edit-preferred-foot').value,
                     jersey_number: parseInt(document.getElementById('edit-jersey-number').value) || null,
                     height_cm: parseInt(document.getElementById('edit-height-cm').value) || null,
-                    weight_kg: parseFloat(document.getElementById('edit-weight-kg').value) || null,
+                    // weight_kg: managed through weight history system,
                     blood_type: document.getElementById('edit-blood-type').value,
                     current_injury_status: document.getElementById('edit-current-injury-status').value,
                     phone: document.getElementById('edit-phone').value,
@@ -1703,7 +2086,7 @@
                     contract_start: document.getElementById('edit-contract-start').value,
                     contract_end: document.getElementById('edit-contract-end').value,
                     club_history: document.getElementById('edit-club-history').value,
-                    injury_history: document.getElementById('edit-injury-history').value,
+                    // injury_history managed separately,
                     notes: document.getElementById('edit-notes').value
                 };
                 
@@ -1737,14 +2120,19 @@
                 
                 if (response.ok && activities.length > 0) {
                     container.innerHTML = activities.map(activity => `
-                        <div style="border: 1px solid #e9ecef; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: ${activity.activity_type === 'match' ? 'linear-gradient(135deg, #ff6b6b, #ffa726)' : 'linear-gradient(135deg, #4ecdc4, #44a08d)'}; color: white;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="border: 1px solid #e9ecef; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: ${activity.activity_type === 'match' ? 'linear-gradient(135deg, #ff6b6b, #ffa726)' : 'linear-gradient(135deg, #4ecdc4, #44a08d)'}; color: white; position: relative;">
+                            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; opacity: 0.8;">
+                                <button onclick="editActivity(${activity.id})" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Düzenle">✏️</button>
+                                <button onclick="deleteActivity(${activity.id})" style="background: rgba(255,0,0,0.3); border: none; color: white; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Sil">🗑️</button>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-right: 70px;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">
                                         ${activity.activity_type === 'training' ? 'ANTRENMAN' : 'MAÇ'}
                                     </span>
                                     <span style="font-weight: bold; font-size: 16px;">
                                         ${new Date(activity.date).toLocaleDateString('tr-TR')}
+                                        ${activity.activity_time ? ` - ${activity.activity_time}` : ''}
                                     </span>
                                 </div>
                                 ${activity.duration_minutes ? `<span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; font-size: 12px;">${activity.duration_minutes} dk</span>` : ''}
@@ -1902,6 +2290,415 @@
                 document.getElementById('player-stats-summary').innerHTML = '<div class="loading">İstatistikler yüklenemedi.</div>';
             }
         }
+        
+        // Weight History Modal Functions
+        function showWeightHistoryModal() {
+            if (!currentPlayerData) return;
+            
+            const fullName = `${currentPlayerData.first_name || ''} ${currentPlayerData.last_name || ''}`.trim();
+            document.getElementById('weight-history-title').textContent = `${fullName} - Kilo Geçmişi`;
+            document.getElementById('weight-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('weight-history-modal').style.display = 'block';
+            loadWeightHistory();
+        }
+        
+        function closeWeightHistoryModal() {
+            document.getElementById('weight-history-modal').style.display = 'none';
+        }
+        
+        async function loadWeightHistory() {
+            if (!currentPlayerData) return;
+            
+            try {
+                const response = await fetch(`/api/players/${currentPlayerData.id}/weight-measurements`);
+                const weights = await response.json();
+                
+                const container = document.getElementById('weight-history-table');
+                
+                if (weights.length > 0) {
+                    let html = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Kilo (kg)</th>
+                                    <th>Notlar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    weights.forEach(weight => {
+                        html += `
+                            <tr>
+                                <td>${new Date(weight.measurement_date).toLocaleDateString('tr-TR')}</td>
+                                <td style="font-weight: bold; color: #007bff;">${weight.weight_kg} kg</td>
+                                <td>${weight.notes || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Henüz kilo ölçümü kaydedilmemiş.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading weight history:', error);
+                document.getElementById('weight-history-table').innerHTML = '<div style="color: red;">Kilo geçmişi yüklenemedi.</div>';
+            }
+        }
+        
+        // Weight Form Handler
+        document.getElementById('weight-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentPlayerData) return;
+            
+            const data = {
+                weight_kg: parseFloat(document.getElementById('weight-value').value),
+                measurement_date: document.getElementById('weight-date').value,
+                notes: document.getElementById('weight-notes').value || ''
+            };
+            
+            try {
+                const response = await fetch(`/api/players/${currentPlayerData.id}/weight-measurements`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showWeightAlert('success', 'Kilo ölçümü başarıyla kaydedildi!');
+                    document.getElementById('weight-form').reset();
+                    document.getElementById('weight-date').value = new Date().toISOString().split('T')[0];
+                    loadWeightHistory();
+                    
+                    // Update current weight display
+                    document.getElementById('detail-weight').textContent = data.weight_kg;
+                    document.getElementById('view-weight-kg').textContent = data.weight_kg;
+                } else {
+                    showWeightAlert('error', result.error || 'Kilo ölçümü kaydedilemedi');
+                }
+            } catch (error) {
+                console.error('Error adding weight measurement:', error);
+                showWeightAlert('error', 'Sunucu hatası oluştu');
+            }
+        });
+        
+        function showWeightAlert(type, message) {
+            const container = document.getElementById('weight-modal-alert');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            container.style.display = 'block';
+            setTimeout(() => {
+                if (type !== 'success') container.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Injury History Modal Functions
+        function showInjuryHistoryModal() {
+            if (!currentPlayerData) return;
+            
+            const fullName = `${currentPlayerData.first_name || ''} ${currentPlayerData.last_name || ''}`.trim();
+            document.getElementById('injury-history-title').textContent = `${fullName} - Sakatlık Geçmişi`;
+            document.getElementById('injury-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('injury-history-modal').style.display = 'block';
+            loadInjuryHistory();
+        }
+        
+        function closeInjuryHistoryModal() {
+            document.getElementById('injury-history-modal').style.display = 'none';
+        }
+        
+        async function loadInjuryHistory() {
+            if (!currentPlayerData) return;
+            
+            try {
+                const response = await fetch(`/api/players/${currentPlayerData.id}/injury-records`);
+                const injuries = await response.json();
+                
+                const container = document.getElementById('injury-history-table');
+                
+                if (injuries.length > 0) {
+                    let activeInjuries = injuries.filter(i => i.status === 'active');
+                    
+                    // Update injury status display
+                    if (activeInjuries.length > 0) {
+                        document.getElementById('view-injury-status').textContent = 
+                            `${activeInjuries.length} aktif sakatlık: ${activeInjuries.map(i => i.injury_type).join(', ')}`;
+                    } else {
+                        document.getElementById('view-injury-status').textContent = 'Aktif sakatlık bulunmuyor';
+                    }
+                    
+                    let html = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Tür</th>
+                                    <th>Durum</th>
+                                    <th>İyileşme</th>
+                                    <th>Açıklama</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    injuries.forEach(injury => {
+                        const statusClass = injury.status === 'active' ? 'color: red; font-weight: bold;' : 'color: green;';
+                        const recoveryDate = injury.recovery_date ? new Date(injury.recovery_date).toLocaleDateString('tr-TR') : '-';
+                        
+                        html += `
+                            <tr>
+                                <td>${new Date(injury.injury_date).toLocaleDateString('tr-TR')}</td>
+                                <td style="font-weight: bold;">${injury.injury_type}</td>
+                                <td style="${statusClass}">${injury.status === 'active' ? 'Aktif' : 'İyileşmiş'}</td>
+                                <td>${recoveryDate}</td>
+                                <td>${injury.description || '-'}</td>
+                                <td>
+                                    ${injury.status === 'active' ? 
+                                        `<button class="btn btn-sm" onclick="markInjuryRecovered(${injury.id})" style="background: #28a745; color: white;">İyileşti</button>` 
+                                        : '-'
+                                    }
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Henüz sakatlık kaydı bulunmuyor.</div>';
+                    document.getElementById('view-injury-status').textContent = 'Aktif sakatlık bulunmuyor';
+                }
+            } catch (error) {
+                console.error('Error loading injury history:', error);
+                document.getElementById('injury-history-table').innerHTML = '<div style="color: red;">Sakatlık geçmişi yüklenemedi.</div>';
+            }
+        }
+        
+        // Injury Form Handler
+        document.getElementById('injury-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentPlayerData) return;
+            
+            const data = {
+                injury_date: document.getElementById('injury-date').value,
+                injury_type: document.getElementById('injury-type').value,
+                description: document.getElementById('injury-description').value || '',
+                recovery_date: document.getElementById('injury-recovery-date').value || null,
+                status: document.getElementById('injury-status').value
+            };
+            
+            try {
+                const response = await fetch(`/api/players/${currentPlayerData.id}/injury-records`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showInjuryAlert('success', 'Sakatlık kaydı başarıyla eklendi!');
+                    document.getElementById('injury-form').reset();
+                    document.getElementById('injury-date').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('injury-status').value = 'active';
+                    loadInjuryHistory();
+                } else {
+                    showInjuryAlert('error', result.error || 'Sakatlık kaydedilemedi');
+                }
+            } catch (error) {
+                console.error('Error adding injury record:', error);
+                showInjuryAlert('error', 'Sunucu hatası oluştu');
+            }
+        });
+        
+        async function markInjuryRecovered(injuryId) {
+            if (!currentPlayerData) return;
+            
+            const recoveryDate = prompt('İyileşme tarihi (YYYY-MM-DD formatında):');
+            if (!recoveryDate) return;
+            
+            try {
+                const response = await fetch(`/api/players/${currentPlayerData.id}/injury-records/${injuryId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'recovered',
+                        recovery_date: recoveryDate
+                    })
+                });
+                
+                if (response.ok) {
+                    loadInjuryHistory();
+                } else {
+                    alert('Sakatlık durumu güncellenemedi');
+                }
+            } catch (error) {
+                console.error('Error updating injury:', error);
+                alert('Sunucu hatası oluştu');
+            }
+        }
+        
+        function showInjuryAlert(type, message) {
+            const container = document.getElementById('injury-modal-alert');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            container.style.display = 'block';
+            setTimeout(() => {
+                if (type !== 'success') container.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Activity Edit/Delete Functions
+        let currentEditingActivity = null;
+        
+        async function editActivity(activityId) {
+            try {
+                // Get current activities from the loaded data
+                const response = await fetch(`/api/activities?player_id=${currentPlayerData.id}`);
+                const activities = await response.json();
+                
+                const activity = activities.find(a => a.id === activityId);
+                if (!activity) {
+                    alert('Aktivite bulunamadı');
+                    return;
+                }
+                
+                currentEditingActivity = activity;
+                
+                // Populate edit form
+                document.getElementById('edit-activity-id').value = activity.id;
+                document.getElementById('edit-activity-date').value = activity.date;
+                document.getElementById('edit-activity-time').value = activity.activity_time || '';
+                document.getElementById('edit-activity-type').value = activity.activity_type;
+                document.getElementById('edit-duration').value = activity.duration_minutes || '';
+                document.getElementById('edit-distance').value = activity.total_distance_m || '';
+                document.getElementById('edit-hs16').value = activity.high_speed_16kmh_m || '';
+                document.getElementById('edit-hs18').value = activity.high_speed_18kmh_m || '';
+                document.getElementById('edit-hs20').value = activity.high_speed_20kmh_m || '';
+                document.getElementById('edit-hs24').value = activity.sprint_24kmh_m || '';
+                document.getElementById('edit-sprint-count').value = activity.sprint_count || '';
+                document.getElementById('edit-acc-count').value = activity.acc_count || '';
+                document.getElementById('edit-dec-count').value = activity.dec_count || '';
+                document.getElementById('edit-metabolic-power').value = activity.metabolic_power || '';
+                document.getElementById('edit-activity-notes').value = activity.notes || '';
+                
+                // Show modal
+                document.getElementById('activity-edit-title').textContent = 
+                    `${activity.activity_type === 'training' ? 'Antrenman' : 'Maç'} Düzenle - ${new Date(activity.date).toLocaleDateString('tr-TR')}`;
+                document.getElementById('activity-edit-modal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading activity for edit:', error);
+                alert('Aktivite yüklenirken hata oluştu');
+            }
+        }
+        
+        async function deleteActivity(activityId) {
+            if (!confirm('Bu aktiviteyi silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/activities/${activityId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Refresh activities list
+                    loadPlayerActivities(currentPlayerData.id);
+                    // Refresh stats if visible
+                    if (document.getElementById('tab-stats').classList.contains('active')) {
+                        loadPlayerStats(currentPlayerData.id);
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Aktivite silinirken hata oluştu');
+                }
+            } catch (error) {
+                console.error('Error deleting activity:', error);
+                alert('Sunucu hatası oluştu');
+            }
+        }
+        
+        function closeActivityEditModal() {
+            document.getElementById('activity-edit-modal').style.display = 'none';
+            document.getElementById('activity-edit-modal-alert').style.display = 'none';
+            currentEditingActivity = null;
+        }
+        
+        function showActivityEditAlert(type, message) {
+            const container = document.getElementById('activity-edit-modal-alert');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            container.style.display = 'block';
+            setTimeout(() => {
+                if (type !== 'success') container.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Activity Edit Form Handler
+        document.getElementById('activity-edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentEditingActivity) {
+                showActivityEditAlert('error', 'Düzenlenecek aktivite bulunamadı');
+                return;
+            }
+            
+            const toInt = v => {
+                const parsed = parseInt(v, 10);
+                return isNaN(parsed) ? null : parsed;
+            };
+            
+            const data = {
+                date: document.getElementById('edit-activity-date').value,
+                activity_time: document.getElementById('edit-activity-time').value || null,
+                activity_type: document.getElementById('edit-activity-type').value,
+                duration_minutes: toInt(document.getElementById('edit-duration').value),
+                total_distance_m: toInt(document.getElementById('edit-distance').value),
+                high_speed_16kmh_m: toInt(document.getElementById('edit-hs16').value),
+                high_speed_18kmh_m: toInt(document.getElementById('edit-hs18').value),
+                high_speed_20kmh_m: toInt(document.getElementById('edit-hs20').value),
+                sprint_24kmh_m: toInt(document.getElementById('edit-hs24').value),
+                sprint_count: toInt(document.getElementById('edit-sprint-count').value),
+                acc_count: toInt(document.getElementById('edit-acc-count').value),
+                dec_count: toInt(document.getElementById('edit-dec-count').value),
+                metabolic_power: parseFloat(document.getElementById('edit-metabolic-power').value) || null,
+                notes: document.getElementById('edit-activity-notes').value || null
+            };
+            
+            try {
+                const response = await fetch(`/api/activities/${currentEditingActivity.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showActivityEditAlert('success', 'Aktivite başarıyla güncellendi!');
+                    setTimeout(() => {
+                        closeActivityEditModal();
+                        // Refresh activities and stats
+                        loadPlayerActivities(currentPlayerData.id);
+                        if (document.getElementById('tab-stats').classList.contains('active')) {
+                            loadPlayerStats(currentPlayerData.id);
+                        }
+                    }, 1500);
+                } else {
+                    showActivityEditAlert('error', result.error || 'Aktivite güncellenirken hata oluştu');
+                }
+            } catch (error) {
+                console.error('Error updating activity:', error);
+                showActivityEditAlert('error', 'Sunucu hatası oluştu');
+            }
+        });
         
     </script>
 </body>
