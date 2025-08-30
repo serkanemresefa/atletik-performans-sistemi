@@ -808,6 +808,101 @@ def handle_single_player(player_id):
         
         return jsonify({'success': True, 'message': 'Oyuncu silindi'})
 
+@app.route('/api/players/<int:player_id>/statistics', methods=['GET'])
+@login_required
+def get_player_statistics(player_id):
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Oyuncunun kullanıcının takımına ait olduğunu kontrol et
+    player_check = conn.execute('''
+        SELECT p.id, p.first_name, p.last_name, p.primary_position FROM players p 
+        JOIN teams t ON p.team_id = t.id 
+        WHERE p.id = ? AND t.user_id = ?
+    ''', (player_id, user_id)).fetchone()
+    
+    if not player_check:
+        conn.close()
+        return jsonify({'error': 'Yetkisiz erişim'}), 403
+    
+    # Genel istatistikler
+    total_activities = conn.execute('SELECT COUNT(*) FROM activities WHERE player_id = ?', (player_id,)).fetchone()[0]
+    training_count = conn.execute("SELECT COUNT(*) FROM activities WHERE player_id = ? AND activity_type = 'training'", (player_id,)).fetchone()[0]
+    match_count = conn.execute("SELECT COUNT(*) FROM activities WHERE player_id = ? AND activity_type = 'match'", (player_id,)).fetchone()[0]
+    
+    # Ortalama performans metrikleri
+    avg_stats = conn.execute('''
+        SELECT 
+            AVG(duration_minutes) as avg_duration,
+            AVG(total_distance_m) as avg_distance,
+            AVG(high_speed_16kmh_m) as avg_hs16,
+            AVG(high_speed_18kmh_m) as avg_hs18,
+            AVG(high_speed_20kmh_m) as avg_hs20,
+            AVG(sprint_24kmh_m) as avg_sprint,
+            AVG(acc_decc_count) as avg_acc_decc,
+            AVG(high_metabolic_power_m) as avg_metabolic
+        FROM activities WHERE player_id = ?
+    ''', (player_id,)).fetchone()
+    
+    # Antrenman vs maç karşılaştırması
+    training_avg = conn.execute('''
+        SELECT 
+            AVG(duration_minutes) as avg_duration,
+            AVG(total_distance_m) as avg_distance,
+            AVG(high_speed_20kmh_m) as avg_hs20,
+            AVG(sprint_24kmh_m) as avg_sprint
+        FROM activities WHERE player_id = ? AND activity_type = 'training'
+    ''', (player_id,)).fetchone()
+    
+    match_avg = conn.execute('''
+        SELECT 
+            AVG(duration_minutes) as avg_duration,
+            AVG(total_distance_m) as avg_distance,
+            AVG(high_speed_20kmh_m) as avg_hs20,
+            AVG(sprint_24kmh_m) as avg_sprint
+        FROM activities WHERE player_id = ? AND activity_type = 'match'
+    ''', (player_id,)).fetchone()
+    
+    # En son aktivite tarihi
+    last_activity = conn.execute('SELECT MAX(date) FROM activities WHERE player_id = ?', (player_id,)).fetchone()[0]
+    
+    conn.close()
+    
+    return jsonify({
+        'player_name': f"{player_check['first_name']} {player_check['last_name']}",
+        'position': player_check['primary_position'],
+        'general_stats': {
+            'total_activities': total_activities,
+            'training_count': training_count,
+            'match_count': match_count,
+            'last_activity_date': last_activity
+        },
+        'averages': {
+            'duration_minutes': round(avg_stats['avg_duration'] or 0, 1),
+            'total_distance_m': round(avg_stats['avg_distance'] or 0, 0),
+            'high_speed_16kmh_m': round(avg_stats['avg_hs16'] or 0, 0),
+            'high_speed_18kmh_m': round(avg_stats['avg_hs18'] or 0, 0),
+            'high_speed_20kmh_m': round(avg_stats['avg_hs20'] or 0, 0),
+            'sprint_24kmh_m': round(avg_stats['avg_sprint'] or 0, 0),
+            'acc_decc_count': round(avg_stats['avg_acc_decc'] or 0, 0),
+            'metabolic_power_m': round(avg_stats['avg_metabolic'] or 0, 0)
+        },
+        'training_vs_match': {
+            'training': {
+                'duration': round(training_avg['avg_duration'] or 0, 1),
+                'distance': round(training_avg['avg_distance'] or 0, 0),
+                'high_speed': round(training_avg['avg_hs20'] or 0, 0),
+                'sprint': round(training_avg['avg_sprint'] or 0, 0)
+            },
+            'match': {
+                'duration': round(match_avg['avg_duration'] or 0, 1),
+                'distance': round(match_avg['avg_distance'] or 0, 0),
+                'high_speed': round(match_avg['avg_hs20'] or 0, 0),
+                'sprint': round(match_avg['avg_sprint'] or 0, 0)
+            }
+        }
+    })
+
 @app.route('/api/players/<int:player_id>/stats', methods=['GET'])
 @login_required
 def get_player_delete_stats(player_id):
@@ -986,11 +1081,11 @@ def get_analysis():
 
     for pid in player_ids:
         # Fetch player name
-        player_row = conn.execute('SELECT name FROM players WHERE id = ?', (pid,)).fetchone()
+        player_row = conn.execute('SELECT first_name, last_name FROM players WHERE id = ?', (pid,)).fetchone()
         if not player_row:
             # Skip unknown players
             continue
-        player_name = player_row['name']
+        player_name = f"{player_row['first_name']} {player_row['last_name']}"
 
         # Compute averages for training activities
         training_stats = conn.execute(
