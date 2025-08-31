@@ -5,23 +5,42 @@ import os
 import json
 import hashlib
 import secrets
+import bcrypt
 from functools import wraps
 
 app = Flask(__name__)
-CORS(app)
-app.secret_key = secrets.token_hex(32)
+# Restrict CORS to localhost and only API routes
+CORS(app, resources={
+    r"/api/*": {"origins": ["http://localhost:8081", "http://127.0.0.1:8081"]}
+})
+
+# Session configuration
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-' + secrets.token_hex(16))
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+# app.config['SESSION_COOKIE_SECURE'] = True  # Enable in production with HTTPS
 
 DATABASE = 'atletik_performans.db'
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
+    # Enable foreign key constraints
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn
 
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(password, password_hash):
+    """Verify password with backward compatibility for SHA-256 hashes"""
+    # Check if it's a bcrypt hash (starts with $2a$, $2b$, $2x$, or $2y$)
+    if password_hash.startswith('$2'):
+        return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+    
+    # Fallback to SHA-256 for existing users
     return hashlib.sha256(password.encode()).hexdigest() == password_hash
 
 def login_required(f):
@@ -398,6 +417,28 @@ def init_database():
             print(f"Database initialized with demo user, {len(all_players)} players, and {len(sample_activities)} activities.")
         except sqlite3.IntegrityError:
             print("Demo user already exists.")
+    
+    # Create performance indexes (idempotent)
+    conn = get_db_connection()
+    try:
+        # Index for frequent player queries by team
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_players_team_id ON players(team_id)')
+        
+        # Index for activity queries by player and date
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_activities_player_date ON activities(player_id, date)')
+        
+        # Index for weight measurements by player
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_weight_player_id ON weight_measurements(player_id)')
+        
+        # Index for injury records by player
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_injury_player_id ON injury_records(player_id)')
+        
+        conn.commit()
+        conn.close()
+        print("Database indexes created successfully.")
+    except Exception as e:
+        print(f"Error creating indexes: {e}")
+        conn.close()
 
 @app.route('/')
 def index():
@@ -698,68 +739,6 @@ def handle_players():
         conn.close()
         return jsonify({'id': player_id, 'name': f'{first_name} {last_name}'}), 201
 
-@app.route('/api/players/<int:player_id>', methods=['PUT', 'DELETE'])
-@login_required
-def manage_player(player_id):
-    user_id = session['user_id']
-    conn = get_db_connection()
-    
-    # Check if player belongs to user's team
-    player = conn.execute('''
-        SELECT p.* FROM players p 
-        JOIN teams t ON p.team_id = t.id 
-        WHERE p.id = ? AND t.user_id = ?
-    ''', (player_id, user_id)).fetchone()
-    
-    if not player:
-        conn.close()
-        return jsonify({'error': 'Oyuncu bulunamadı veya yetkiniz yok'}), 404
-    
-    if request.method == 'PUT':
-        data = request.json
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        
-        if not first_name or not last_name:
-            conn.close()
-            return jsonify({'error': 'Ad ve soyad gerekli'}), 400
-        
-        # Update player with all fields
-        conn.execute('''
-            UPDATE players SET first_name = ?, last_name = ?, birth_date = ?, nationality = ?,
-                             primary_position = ?, secondary_positions = ?, preferred_foot = ?,
-                             jersey_number = ?, height_cm = ?, weight_kg = ?, previous_club = ?,
-                             club_history = ?, contract_start = ?, contract_end = ?, blood_type = ?,
-                             injury_history = ?, current_injury_status = ?, phone = ?, email = ?,
-                             emergency_contact = ?, notes = ?
-            WHERE id = ?
-        ''', (
-            first_name, last_name, data.get('birth_date'), data.get('nationality'),
-            data.get('primary_position'), data.get('secondary_positions'), data.get('preferred_foot'),
-            data.get('jersey_number'), data.get('height_cm'), data.get('weight_kg'),
-            data.get('previous_club'), data.get('club_history'), data.get('contract_start'),
-            data.get('contract_end'), data.get('blood_type'), data.get('injury_history'),
-            data.get('current_injury_status'), data.get('phone'), data.get('email'),
-            data.get('emergency_contact'), data.get('notes'), player_id
-        ))
-        conn.commit()
-        conn.close()
-        return jsonify({'success': True, 'message': 'Oyuncu bilgileri güncellendi'})
-    
-    if request.method == 'DELETE':
-        # Get activity count before deletion
-        activity_count = conn.execute('SELECT COUNT(*) FROM activities WHERE player_id = ?', (player_id,)).fetchone()[0]
-        
-        # Delete player and their activities
-        conn.execute('DELETE FROM activities WHERE player_id = ?', (player_id,))
-        conn.execute('DELETE FROM players WHERE id = ?', (player_id,))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Oyuncu silindi: {activity_count} aktivite verisi kaldırıldı'
-        })
 
 @app.route('/api/teams/<int:team_id>/stats', methods=['GET'])
 @login_required
@@ -1161,7 +1140,7 @@ def dashboard_stats():
     '''
     counts = conn.execute(query_counts, (team_id,)).fetchone()
     recent_activities = conn.execute('''
-        SELECT a.date, p.name as player_name, a.activity_type, a.total_distance_m, a.duration_minutes
+        SELECT a.date, (p.first_name || ' ' || p.last_name) as player_name, a.activity_type, a.total_distance_m, a.duration_minutes
         FROM activities a JOIN players p ON a.player_id = p.id 
         WHERE p.team_id = ? ORDER BY a.created_at DESC LIMIT 10
     ''', (team_id,)).fetchall()
@@ -1180,14 +1159,14 @@ def get_analysis():
     """
     Compute training vs match load metrics for one or more players over a date range.
 
-    Expects JSON body with:
+    Request JSON body:
         player_ids: list of player IDs to analyse
         start_date: ISO date string (YYYY-MM-DD)
         end_date: ISO date string (YYYY-MM-DD)
 
-    Returns JSON with per‐player averages for training and match activities and
-    percentage ratios (training ÷ match × 100). A team summary aggregated over
-    selected players is also included.
+    Response JSON:
+        players: array of player analysis objects with training/match stats and ratios
+        summary: aggregated team summary with training, match, and ratios objects
     """
     user_id = session['user_id']
     data = request.json or {}
