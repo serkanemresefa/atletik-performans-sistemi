@@ -4,7 +4,7 @@
             background-color: #f8f9fa;
             color: #212529;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; }
         .header, .tab-content { 
             background: white; 
             border: 1px solid #dee2e6;
@@ -70,11 +70,12 @@
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
         .form-control { 
             width: 100%; 
-            padding: 10px; 
+            padding: 8px 12px; 
             border: 1px solid #ced4da; 
             border-radius: 6px; 
             font-size: 14px; 
-            transition: border-color 0.2s ease, box-shadow 0.2s ease; 
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            line-height: 1.5;
         }
         .form-control:focus { 
             outline: none; 
@@ -85,22 +86,24 @@
             background-color: #0d6efd; 
             color: white; 
             border: none; 
-            padding: 12px 24px; 
+            padding: 8px 16px; 
             border-radius: 6px; 
             cursor: pointer; 
             font-weight: 500; 
-            transition: background-color 0.2s ease; 
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+            line-height: 1.5;
         }
         .btn:hover { background-color: #0b5ed7; }
         .btn-success { background-color: #198754; }
         .btn-success:hover { background-color: #157347; }
         .btn-danger {
             background-color: #dc3545;
-            padding: 8px 16px;
-            font-size: 14px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
         .btn-danger:hover { background-color: #bb2d3b; }
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
         .table-container { 
             background: white; 
             border: 1px solid #dee2e6;
@@ -111,7 +114,7 @@
         .table { width: 100%; border-collapse: collapse; }
         .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
         .table th { background: #f8f9fa; font-weight: 600; }
-        .chart-container { height: 400px; margin: 20px 0; }
+        .chart-container { height: 400px; margin: 20px 0; min-height: 300px; }
         .alert { 
             padding: 12px 16px; 
             border-radius: 6px; 
@@ -121,14 +124,46 @@
         .alert-success { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc; }
         .alert-error { background-color: #f8d7da; color: #842029; border-color: #f5c2c7; }
         .loading { text-align: center; padding: 40px; color: #6c757d; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; line-height: 1.4; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: white; margin: 5% auto; padding: 0; border-radius: 8px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background-color: white; margin: 5% auto; padding: 0; border-radius: 8px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
         .modal-header { padding: 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 20px; }
         .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover { color: #000; }
-        @media (max-width: 768px) { .nav-tabs, .team-selector-container { flex-direction: column; } .form-row { grid-template-columns: 1fr; } }
+        /* Tablet */
+        @media (max-width: 992px) {
+            .container { padding: 15px; }
+            .modal-content { width: 98%; margin: 2% auto; }
+            .form-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .nav-tabs, .team-selector-container { flex-direction: column; gap: 10px; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .header h1 { font-size: 1.4rem; text-align: left; }
+            .nav-tab { padding: 12px 16px; font-size: 14px; }
+            .modal-content { width: 100%; margin: 0; border-radius: 0; max-height: 100vh; }
+            .chart-container { height: 300px; }
+            .table-container { overflow-x: auto; }
+            .table { min-width: 600px; }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 480px) {
+            .container { padding: 8px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.2rem; }
+            .nav-tab { padding: 10px 12px; font-size: 13px; }
+            .btn { padding: 10px 16px; font-size: 14px; }
+            .form-control { padding: 10px; font-size: 16px; }
+            .chart-container { height: 250px; }
+            .detail-grid { grid-template-columns: 1fr; }
+        }
         
         /* Player Detail Modal Styles */
         .detail-tabs { display: flex; gap: 0; }
@@ -169,6 +204,7 @@
             padding: 40px; 
             width: 100%; 
             max-width: 400px;
+            margin: 20px;
         }
         .logo { 
             text-align: center; 
@@ -213,31 +249,33 @@
         }
         .form-control { 
             width: 100%; 
-            padding: 12px; 
+            padding: 8px 12px; 
             border: 1px solid #ced4da; 
             border-radius: 6px; 
             font-size: 14px; 
-            transition: border-color 0.2s ease, box-shadow 0.2s ease; 
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            line-height: 1.5;
         }
         .form-control:focus { 
             outline: none; 
             border-color: #86b7fe;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
-        .btn { 
+        .auth-container .btn { 
             width: 100%;
             background-color: #0d6efd;
             color: white; 
             border: none; 
-            padding: 12px 24px; 
+            padding: 8px 16px; 
             border-radius: 6px; 
             cursor: pointer; 
             font-weight: 500; 
-            font-size: 16px;
-            transition: background-color 0.2s ease; 
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+            min-height: 36px;
         }
-        .btn:hover { background-color: #0b5ed7; }
-        .btn:disabled { 
+        .auth-container .btn:hover { background-color: #0b5ed7; }
+        .auth-container .btn:disabled { 
             opacity: 0.65; 
             cursor: not-allowed; 
         }
@@ -268,3 +306,82 @@
             color: #3730a3;
         }
         .demo-info strong { display: block; margin-bottom: 5px; }
+
+        /* Additional Mobile Responsive Rules */
+        @media (max-width: 768px) {
+            /* Button adjustments for mobile */
+            .btn { 
+                padding: 10px 16px; 
+                font-size: 14px;
+                min-height: 42px;
+            }
+            .btn-sm { 
+                padding: 6px 10px; 
+                font-size: 12px;
+                min-height: 36px;
+            }
+            .form-control { 
+                padding: 10px 12px; 
+                font-size: 16px;
+                min-height: 42px;
+            }
+            
+            /* Login page mobile adjustments */
+            .auth-container { 
+                margin: 15px; 
+                padding: 25px; 
+                max-width: none;
+            }
+            .logo h1 { font-size: 1.4rem; }
+            .demo-info { font-size: 12px; padding: 10px; }
+            
+            /* Form improvements for mobile */
+            .form-group label { font-size: 14px; }
+            .auth-tab { padding: 12px; font-size: 14px; min-height: 42px; }
+        }
+
+        @media (max-width: 480px) {
+            /* Button adjustments for small mobile */
+            .btn { 
+                padding: 12px 16px; 
+                font-size: 14px;
+                min-height: 44px;
+            }
+            .btn-sm { 
+                padding: 8px 12px; 
+                font-size: 12px;
+                min-height: 38px;
+            }
+            .form-control { 
+                padding: 12px; 
+                font-size: 16px;
+                min-height: 44px;
+            }
+            
+            /* Login page small mobile adjustments */
+            body { padding: 10px; }
+            .auth-container { 
+                margin: 5px; 
+                padding: 20px; 
+                border-radius: 4px;
+            }
+            .logo h1 { font-size: 1.2rem; line-height: 1.3; }
+            .demo-info { font-size: 11px; padding: 8px; }
+            .auth-tab { padding: 12px; font-size: 13px; min-height: 44px; }
+        }
+
+        /* Fix table overflow on all screen sizes */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Improve touch targets - only for very specific mobile cases */
+        @media (hover: none) and (pointer: coarse) and (max-width: 480px) {
+            .btn:not(.btn-sm) {
+                min-height: 44px;
+            }
+            .form-control {
+                min-height: 44px;
+            }
+        }

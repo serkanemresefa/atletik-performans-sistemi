@@ -24,44 +24,28 @@ export SECRET_KEY="your-secure-random-secret-key"
 python3 app.py
 ```
 
-## 🐳 Docker (Önerilen)
-
-```bash
-docker-compose up --build
-# veya
-docker build -t atletik-performans web_app/
-docker run -p 8081:8081 -e SECRET_KEY="your-secret" atletik-performans
-```
-
-## 🧪 Test Suite
-
-```bash
-pip3 install pytest==8.0.0
-pytest tests/test_app.py -v
-```
-
 **Uygulama:** http://localhost:8081  
 **Demo:** demo / demo123
 
 ---
 
-## ⚡ v2.4 Güvenlik & Performans Güncellemesi
+## 📱 v2.5 Responsive Design İyileştirmeleri
 
-### 🔒 Güvenlik İyileştirmeleri
-- SHA-256 → bcrypt migration (backward compatible)
-- Environment-based SECRET_KEY management
-- CORS localhost-only restriction
-- Secure cookie settings (HttpOnly, SameSite)
+### 🖥️ Çoklu Ekran Desteği
+- **Desktop (992px+):** Optimal buton/form boyutları
+- **Tablet (768-992px):** Orta boyut responsive layoutlar
+- **Mobil (480-768px):** Dokunma dostu UI elementleri
+- **Küçük Mobil (480px-):** Tek sütunlu düzen
 
-### 🚀 Performans & Kod Kalitesi
-- SQLite foreign key constraints + 4 optimized indexes
-- JavaScript/CSS modülleştirildi (1680js + 270css lines)
-- Duplicate API route handlers konsolidasyonu
-- Chart.js version locked (4.4.1)
+### 📐 UI/UX Optimizasyonları
+- **Buton Boyutları:** Desktop'ta kompakt, mobilde dokunma dostu (44px min-height)
+- **Form Kontrolleri:** iOS zoom engellemek için 16px font-size
+- **Modal Pencereler:** Responsive genişlik ayarları (%95-98%)
+- **Tablo Görünümü:** Yatay kaydırma desteği
 
-### 🐳 DevOps & Testing
-- Production-ready Dockerfile + docker-compose
-- Pytest test suite (10 test cases)
-- Health checks + non-root user security
+### 🎯 Touch Target İyileştirmeleri
+- Mobil cihazlarda minimum 44px dokunma alanı
+- CSS Specificity düzeltmeleri (cascading sorunları)
+- Login/Ana sayfa butonları için ayrı optimizasyonlar
 
-**Son Güncelleme:** 31 Ağustos 2025
+**Son Güncelleme:** 1 Eylül 2025
