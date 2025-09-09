@@ -2,6 +2,7 @@
         let teams = [];
         let players = [];
         let analysisChart = null;
+        let matchPeriodsChart = null;
         let currentUser = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -370,6 +371,125 @@
             }
         }
 
+        async function runMatchPeriodsAnalysis() {
+            if (!currentTeamId) {
+                showAlert('analysis-alert', 'error', 'Önce bir takım seçmelisiniz.');
+                return;
+            }
+
+            const selectedPlayers = Array.from(document.getElementById('analysis-players').selectedOptions).map(o => o.value);
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (selectedPlayers.length === 0 || !startDate || !endDate) {
+                showAlert('analysis-alert', 'error', 'Oyuncu, başlangıç ve bitiş tarihi seçmelisiniz.');
+                return;
+            }
+
+            try {
+                // Hide other results
+                document.getElementById('analysis-results').style.display = 'none';
+                
+                const response = await fetch('/api/match-periods-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        player_ids: selectedPlayers.map(id => parseInt(id)),
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                // Show results
+                document.getElementById('match-periods-results').style.display = 'block';
+
+                // Prepare chart data
+                const labels = data.players.map(p => p.player_name);
+                const firstHalfDistance = data.players.map(p => p.first_half.distance);
+                const secondHalfDistance = data.players.map(p => p.second_half.distance);
+                const firstHalfSpeed = data.players.map(p => p.first_half.max_speed);
+                const secondHalfSpeed = data.players.map(p => p.second_half.max_speed);
+
+                // Create chart
+                const ctx = document.getElementById('match-periods-chart').getContext('2d');
+                if (matchPeriodsChart) matchPeriodsChart.destroy();
+                matchPeriodsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { 
+                                label: '1. Devre Mesafe (m)', 
+                                data: firstHalfDistance, 
+                                backgroundColor: '#28a745',
+                                yAxisID: 'y'
+                            },
+                            { 
+                                label: '2. Devre Mesafe (m)', 
+                                data: secondHalfDistance, 
+                                backgroundColor: '#dc3545',
+                                yAxisID: 'y'
+                            },
+                            { 
+                                label: '1. Devre Max Hız (km/h)', 
+                                data: firstHalfSpeed, 
+                                backgroundColor: '#17a2b8',
+                                type: 'line',
+                                yAxisID: 'y1'
+                            },
+                            { 
+                                label: '2. Devre Max Hız (km/h)', 
+                                data: secondHalfSpeed, 
+                                backgroundColor: '#ffc107',
+                                type: 'line',
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'Mesafe (m)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Hız (km/h)' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+
+                // Fill table
+                const tableBody = document.getElementById('match-periods-table');
+                tableBody.innerHTML = data.players.map(player => `
+                    <tr>
+                        <td>${player.player_name}</td>
+                        <td>${player.first_half.distance}m</td>
+                        <td>${player.second_half.distance}m</td>
+                        <td>${player.first_half.max_speed} km/h</td>
+                        <td>${player.second_half.max_speed} km/h</td>
+                        <td>${player.first_half.sprint_count}</td>
+                        <td>${player.second_half.sprint_count}</td>
+                        <td>${player.total.distance}m / ${player.total.max_speed} km/h</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error('Match periods analysis error:', err);
+                showAlert('analysis-alert', 'error', 'Devre analizi sırasında hata oluştu.');
+            }
+        }
+
         function openDataEntryModal(playerId, playerName) {
             document.getElementById('modal-player-id').value = playerId;
             document.getElementById('modal-player-name').textContent = `${playerName} - Veri Girişi`;
@@ -459,6 +579,69 @@
             document.getElementById('player-detail-activity-form').reset();
             document.getElementById('player-detail-activity-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('player-detail-modal-alert').style.display = 'none';
+            // Clear custom metrics
+            document.getElementById('custom-metrics-container').innerHTML = '';
+            // Reset match periods
+            document.getElementById('match-periods-section').style.display = 'none';
+            document.getElementById('period-inputs').style.display = 'none';
+            document.getElementById('enable-periods').checked = false;
+        }
+        
+        function toggleMatchPeriods() {
+            const activityType = document.getElementById('player-detail-activity-type').value;
+            const matchPeriodsSection = document.getElementById('match-periods-section');
+            
+            if (activityType === 'match') {
+                matchPeriodsSection.style.display = 'block';
+            } else {
+                matchPeriodsSection.style.display = 'none';
+                document.getElementById('period-inputs').style.display = 'none';
+                document.getElementById('enable-periods').checked = false;
+            }
+        }
+        
+        function togglePeriodInputs() {
+            const enablePeriods = document.getElementById('enable-periods').checked;
+            const periodInputs = document.getElementById('period-inputs');
+            
+            if (enablePeriods) {
+                periodInputs.style.display = 'block';
+            } else {
+                periodInputs.style.display = 'none';
+            }
+        }
+        
+        let customMetricCounter = 0;
+        
+        function addCustomMetric() {
+            customMetricCounter++;
+            const container = document.getElementById('custom-metrics-container');
+            const metricDiv = document.createElement('div');
+            metricDiv.className = 'form-row custom-metric-row';
+            metricDiv.style.marginBottom = '10px';
+            metricDiv.innerHTML = `
+                <div class="form-group" style="flex: 2;">
+                    <input type="text" name="custom-metric-name-${customMetricCounter}" 
+                           placeholder="Metrik Adı (örn: Kalp Atış Hızı)" class="form-control">
+                </div>
+                <div class="form-group">
+                    <input type="number" name="custom-metric-value-${customMetricCounter}" 
+                           placeholder="Değer" class="form-control" step="0.1">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="custom-metric-unit-${customMetricCounter}" 
+                           placeholder="Birim (örn: bpm)" class="form-control">
+                </div>
+                <div class="form-group" style="flex: 0 0 auto;">
+                    <button type="button" class="btn" onclick="removeCustomMetric(this)" 
+                            style="background: #e74c3c; color: white; padding: 8px 12px;">×</button>
+                </div>
+            `;
+            container.appendChild(metricDiv);
+        }
+        
+        function removeCustomMetric(button) {
+            button.closest('.custom-metric-row').remove();
         }
         
         function showPlayerDetailAlert(type, message) {
@@ -507,8 +690,135 @@
                 acc_count: toInt(document.getElementById('player-detail-acc-count').value),
                 dec_count: toInt(document.getElementById('player-detail-dec-count').value),
                 metabolic_power: parseFloat(document.getElementById('player-detail-metabolic-power').value) || null,
+                max_speed_kmh: parseFloat(document.getElementById('player-detail-max-speed').value) || null,
+                sprint_count_16plus: toInt(document.getElementById('player-detail-sprint-16').value),
+                sprint_count_18plus: toInt(document.getElementById('player-detail-sprint-18').value),
+                sprint_count_20plus: toInt(document.getElementById('player-detail-sprint-20').value),
+                sprint_count_24plus: toInt(document.getElementById('player-detail-sprint-24').value),
                 notes: document.getElementById('player-detail-notes').value || null
             };
+            
+            // Collect custom metrics
+            const customMetrics = [];
+            const customMetricRows = document.querySelectorAll('.custom-metric-row');
+            customMetricRows.forEach(row => {
+                const nameInput = row.querySelector('input[name^="custom-metric-name-"]');
+                const valueInput = row.querySelector('input[name^="custom-metric-value-"]');
+                const unitInput = row.querySelector('input[name^="custom-metric-unit-"]');
+                
+                const name = nameInput?.value?.trim();
+                const value = parseFloat(valueInput?.value);
+                const unit = unitInput?.value?.trim();
+                
+                if (name && !isNaN(value)) {
+                    customMetrics.push({
+                        metric_name: name,
+                        metric_value: value,
+                        unit: unit || null
+                    });
+                }
+            });
+            
+            if (customMetrics.length > 0) {
+                data.custom_metrics = customMetrics;
+            }
+            
+            // Collect match periods if enabled
+            if (activityType === 'match' && document.getElementById('enable-periods').checked) {
+                const matchPeriods = [];
+                
+                // 1st Half
+                const period1Data = {
+                    duration_minutes: document.getElementById('period-1-duration').value,
+                    total_distance_m: document.getElementById('period-1-distance').value,
+                    high_speed_16kmh_m: document.getElementById('period-1-high-speed-16').value,
+                    high_speed_18kmh_m: document.getElementById('period-1-high-speed-18').value,
+                    high_speed_20kmh_m: document.getElementById('period-1-high-speed-20').value,
+                    sprint_24kmh_m: document.getElementById('period-1-sprint-24').value,
+                    acc_decc_count: document.getElementById('period-1-acc-decc').value,
+                    high_acc_decc_count: document.getElementById('period-1-high-acc-decc').value,
+                    high_metabolic_power_m: document.getElementById('period-1-metabolic-power').value,
+                    max_speed_kmh: document.getElementById('period-1-max-speed').value,
+                    sprint_count_16plus: document.getElementById('period-1-sprint-16').value,
+                    sprint_count_18plus: document.getElementById('period-1-sprint-18').value,
+                    sprint_count_20plus: document.getElementById('period-1-sprint-20').value,
+                    sprint_count_24plus: document.getElementById('period-1-sprint-24-count').value,
+                    notes: document.getElementById('period-1-notes').value
+                };
+                
+                // Check if any period 1 data is entered
+                const hasP1Data = Object.values(period1Data).some(val => val && val.trim() !== '');
+                if (hasP1Data) {
+                    matchPeriods.push({
+                        period_type: '1st_half',
+                        start_minute: 0,
+                        end_minute: 45,
+                        duration_minutes: period1Data.duration_minutes ? parseInt(period1Data.duration_minutes) : null,
+                        total_distance_m: period1Data.total_distance_m ? parseInt(period1Data.total_distance_m) : null,
+                        high_speed_16kmh_m: period1Data.high_speed_16kmh_m ? parseInt(period1Data.high_speed_16kmh_m) : null,
+                        high_speed_18kmh_m: period1Data.high_speed_18kmh_m ? parseInt(period1Data.high_speed_18kmh_m) : null,
+                        high_speed_20kmh_m: period1Data.high_speed_20kmh_m ? parseInt(period1Data.high_speed_20kmh_m) : null,
+                        sprint_24kmh_m: period1Data.sprint_24kmh_m ? parseInt(period1Data.sprint_24kmh_m) : null,
+                        acc_decc_count: period1Data.acc_decc_count ? parseInt(period1Data.acc_decc_count) : null,
+                        high_acc_decc_count: period1Data.high_acc_decc_count ? parseInt(period1Data.high_acc_decc_count) : null,
+                        high_metabolic_power_m: period1Data.high_metabolic_power_m ? parseInt(period1Data.high_metabolic_power_m) : null,
+                        max_speed_kmh: period1Data.max_speed_kmh ? parseFloat(period1Data.max_speed_kmh) : null,
+                        sprint_count_16plus: period1Data.sprint_count_16plus ? parseInt(period1Data.sprint_count_16plus) : null,
+                        sprint_count_18plus: period1Data.sprint_count_18plus ? parseInt(period1Data.sprint_count_18plus) : null,
+                        sprint_count_20plus: period1Data.sprint_count_20plus ? parseInt(period1Data.sprint_count_20plus) : null,
+                        sprint_count_24plus: period1Data.sprint_count_24plus ? parseInt(period1Data.sprint_count_24plus) : null,
+                        notes: period1Data.notes || null
+                    });
+                }
+                
+                // 2nd Half
+                const period2Data = {
+                    duration_minutes: document.getElementById('period-2-duration').value,
+                    total_distance_m: document.getElementById('period-2-distance').value,
+                    high_speed_16kmh_m: document.getElementById('period-2-high-speed-16').value,
+                    high_speed_18kmh_m: document.getElementById('period-2-high-speed-18').value,
+                    high_speed_20kmh_m: document.getElementById('period-2-high-speed-20').value,
+                    sprint_24kmh_m: document.getElementById('period-2-sprint-24').value,
+                    acc_decc_count: document.getElementById('period-2-acc-decc').value,
+                    high_acc_decc_count: document.getElementById('period-2-high-acc-decc').value,
+                    high_metabolic_power_m: document.getElementById('period-2-metabolic-power').value,
+                    max_speed_kmh: document.getElementById('period-2-max-speed').value,
+                    sprint_count_16plus: document.getElementById('period-2-sprint-16').value,
+                    sprint_count_18plus: document.getElementById('period-2-sprint-18').value,
+                    sprint_count_20plus: document.getElementById('period-2-sprint-20').value,
+                    sprint_count_24plus: document.getElementById('period-2-sprint-24-count').value,
+                    notes: document.getElementById('period-2-notes').value
+                };
+                
+                // Check if any period 2 data is entered
+                const hasP2Data = Object.values(period2Data).some(val => val && val.trim() !== '');
+                if (hasP2Data) {
+                    matchPeriods.push({
+                        period_type: '2nd_half',
+                        start_minute: 45,
+                        end_minute: 90,
+                        duration_minutes: period2Data.duration_minutes ? parseInt(period2Data.duration_minutes) : null,
+                        total_distance_m: period2Data.total_distance_m ? parseInt(period2Data.total_distance_m) : null,
+                        high_speed_16kmh_m: period2Data.high_speed_16kmh_m ? parseInt(period2Data.high_speed_16kmh_m) : null,
+                        high_speed_18kmh_m: period2Data.high_speed_18kmh_m ? parseInt(period2Data.high_speed_18kmh_m) : null,
+                        high_speed_20kmh_m: period2Data.high_speed_20kmh_m ? parseInt(period2Data.high_speed_20kmh_m) : null,
+                        sprint_24kmh_m: period2Data.sprint_24kmh_m ? parseInt(period2Data.sprint_24kmh_m) : null,
+                        acc_decc_count: period2Data.acc_decc_count ? parseInt(period2Data.acc_decc_count) : null,
+                        high_acc_decc_count: period2Data.high_acc_decc_count ? parseInt(period2Data.high_acc_decc_count) : null,
+                        high_metabolic_power_m: period2Data.high_metabolic_power_m ? parseInt(period2Data.high_metabolic_power_m) : null,
+                        max_speed_kmh: period2Data.max_speed_kmh ? parseFloat(period2Data.max_speed_kmh) : null,
+                        sprint_count_16plus: period2Data.sprint_count_16plus ? parseInt(period2Data.sprint_count_16plus) : null,
+                        sprint_count_18plus: period2Data.sprint_count_18plus ? parseInt(period2Data.sprint_count_18plus) : null,
+                        sprint_count_20plus: period2Data.sprint_count_20plus ? parseInt(period2Data.sprint_count_20plus) : null,
+                        sprint_count_24plus: period2Data.sprint_count_24plus ? parseInt(period2Data.sprint_count_24plus) : null,
+                        notes: period2Data.notes || null
+                    });
+                }
+                
+                if (matchPeriods.length > 0) {
+                    data.match_periods = matchPeriods;
+                }
+            }
             
             try {
                 const response = await fetch('/api/activities', {
@@ -1159,6 +1469,51 @@
                                         <div style="font-weight: bold; font-size: 14px;">${activity.high_metabolic_power_m} m</div>
                                     </div>
                                 ` : ''}
+                                ${activity.max_speed_kmh ? `
+                                    <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 11px; opacity: 0.9;">Max Sürat</div>
+                                        <div style="font-weight: bold; font-size: 14px;">${activity.max_speed_kmh} km/h</div>
+                                    </div>
+                                ` : ''}
+                                ${activity.sprint_count_16plus ? `
+                                    <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 11px; opacity: 0.9;">Sprint 16+ Sayısı</div>
+                                        <div style="font-weight: bold; font-size: 14px;">${activity.sprint_count_16plus}</div>
+                                    </div>
+                                ` : ''}
+                                ${activity.sprint_count_18plus ? `
+                                    <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 11px; opacity: 0.9;">Sprint 18+ Sayısı</div>
+                                        <div style="font-weight: bold; font-size: 14px;">${activity.sprint_count_18plus}</div>
+                                    </div>
+                                ` : ''}
+                                ${activity.sprint_count_20plus ? `
+                                    <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 11px; opacity: 0.9;">Sprint 20+ Sayısı</div>
+                                        <div style="font-weight: bold; font-size: 14px;">${activity.sprint_count_20plus}</div>
+                                    </div>
+                                ` : ''}
+                                ${activity.sprint_count_24plus ? `
+                                    <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 11px; opacity: 0.9;">Sprint 24+ Sayısı</div>
+                                        <div style="font-weight: bold; font-size: 14px;">${activity.sprint_count_24plus}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            ${activity.custom_metrics && activity.custom_metrics.length > 0 ? `
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                    <div style="font-size: 12px; margin-bottom: 10px; opacity: 0.9; font-weight: bold;">Özel Metrikler:</div>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+                                        ${activity.custom_metrics.map(metric => `
+                                            <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+                                                <div style="font-size: 10px; opacity: 0.9;">${metric.metric_name}</div>
+                                                <div style="font-weight: bold; font-size: 13px;">${metric.metric_value}${metric.unit ? ' ' + metric.unit : ''}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
                             </div>
                             
                             ${activity.notes ? `<div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 6px; font-style: italic; margin-top: 10px; font-size: 13px;">"${activity.notes}"</div>` : ''}

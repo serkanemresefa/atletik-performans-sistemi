@@ -187,7 +187,13 @@ def init_database():
             high_speed_16kmh_m INTEGER, high_speed_18kmh_m INTEGER,
             high_speed_20kmh_m INTEGER, sprint_24kmh_m INTEGER,
             acc_decc_count INTEGER, high_acc_decc_count INTEGER,
-            high_metabolic_power_m INTEGER, notes TEXT,
+            high_metabolic_power_m INTEGER, 
+            max_speed_kmh REAL,
+            sprint_count_16plus INTEGER,
+            sprint_count_18plus INTEGER,
+            sprint_count_20plus INTEGER,
+            sprint_count_24plus INTEGER,
+            notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (player_id) REFERENCES players (id)
         )
@@ -214,6 +220,43 @@ def init_database():
             status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'recovered')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (player_id) REFERENCES players (id)
+        )
+        ''')
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS custom_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            activity_id INTEGER NOT NULL,
+            metric_name TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            unit TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (activity_id) REFERENCES activities (id)
+        )
+        ''')
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS match_periods (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            activity_id INTEGER NOT NULL,
+            period_type TEXT NOT NULL CHECK (period_type IN ('1st_half', '2nd_half', 'extra_time')),
+            start_minute INTEGER NOT NULL DEFAULT 0,
+            end_minute INTEGER NOT NULL DEFAULT 45,
+            duration_minutes INTEGER,
+            total_distance_m INTEGER,
+            high_speed_16kmh_m INTEGER,
+            high_speed_18kmh_m INTEGER,
+            high_speed_20kmh_m INTEGER,
+            sprint_24kmh_m INTEGER,
+            acc_decc_count INTEGER,
+            high_acc_decc_count INTEGER,
+            high_metabolic_power_m INTEGER,
+            max_speed_kmh REAL,
+            sprint_count_16plus INTEGER,
+            sprint_count_18plus INTEGER,
+            sprint_count_20plus INTEGER,
+            sprint_count_24plus INTEGER,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (activity_id) REFERENCES activities (id)
         )
         ''')
         # Demo kullanıcı oluştur
@@ -988,17 +1031,53 @@ def add_activity():
         conn.close()
         return jsonify({'error': 'Yetkisiz erişim'}), 403
     
-    conn.execute('''
-    INSERT INTO activities (player_id, date, activity_time, activity_type, duration_minutes, total_distance_m, high_speed_16kmh_m, high_speed_18kmh_m, high_speed_20kmh_m, sprint_24kmh_m, acc_decc_count, high_acc_decc_count, high_metabolic_power_m, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    # Insert activity with new metrics
+    cursor = conn.execute('''
+    INSERT INTO activities (player_id, date, activity_time, activity_type, duration_minutes, total_distance_m, 
+                          high_speed_16kmh_m, high_speed_18kmh_m, high_speed_20kmh_m, sprint_24kmh_m, 
+                          acc_decc_count, high_acc_decc_count, high_metabolic_power_m, 
+                          max_speed_kmh, sprint_count_16plus, sprint_count_18plus, sprint_count_20plus, sprint_count_24plus, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data['player_id'], data['date'], data.get('activity_time'),
         data['activity_type'], data.get('duration_minutes'), data.get('total_distance_m'),
         data.get('high_speed_16kmh_m'), data.get('high_speed_18kmh_m'),
         data.get('high_speed_20kmh_m'), data.get('sprint_24kmh_m'),
         data.get('acc_decc_count'), data.get('high_acc_decc_count'),
-        data.get('high_metabolic_power_m'), data.get('notes')
+        data.get('high_metabolic_power_m'), data.get('max_speed_kmh'),
+        data.get('sprint_count_16plus'), data.get('sprint_count_18plus'),
+        data.get('sprint_count_20plus'), data.get('sprint_count_24plus'),
+        data.get('notes')
     ))
+    
+    activity_id = cursor.lastrowid
+    
+    # Insert custom metrics if any
+    if 'custom_metrics' in data and data['custom_metrics']:
+        for metric in data['custom_metrics']:
+            conn.execute('''
+            INSERT INTO custom_metrics (activity_id, metric_name, metric_value, unit)
+            VALUES (?, ?, ?, ?)
+            ''', (activity_id, metric['metric_name'], metric['metric_value'], metric.get('unit')))
+    
+    # Insert match periods if any
+    if 'match_periods' in data and data['match_periods']:
+        for period in data['match_periods']:
+            conn.execute('''
+            INSERT INTO match_periods (activity_id, period_type, start_minute, end_minute, 
+                                     duration_minutes, total_distance_m, high_speed_16kmh_m, 
+                                     high_speed_18kmh_m, high_speed_20kmh_m, sprint_24kmh_m,
+                                     acc_decc_count, high_acc_decc_count, high_metabolic_power_m,
+                                     max_speed_kmh, sprint_count_16plus, sprint_count_18plus,
+                                     sprint_count_20plus, sprint_count_24plus, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (activity_id, period['period_type'], period['start_minute'], period['end_minute'],
+                  period.get('duration_minutes'), period.get('total_distance_m'), period.get('high_speed_16kmh_m'),
+                  period.get('high_speed_18kmh_m'), period.get('high_speed_20kmh_m'), period.get('sprint_24kmh_m'),
+                  period.get('acc_decc_count'), period.get('high_acc_decc_count'), period.get('high_metabolic_power_m'),
+                  period.get('max_speed_kmh'), period.get('sprint_count_16plus'), period.get('sprint_count_18plus'),
+                  period.get('sprint_count_20plus'), period.get('sprint_count_24plus'), period.get('notes')))
+    
     conn.commit()
     conn.close()
     return jsonify({'success': True}), 201
@@ -1032,8 +1111,23 @@ def get_activities():
         ORDER BY date DESC, activity_time DESC, created_at DESC
     ''', (player_id,)).fetchall()
     
+    # Her aktivite için custom metrics'i getir
+    result = []
+    for activity in activities:
+        activity_dict = dict(activity)
+        
+        # Custom metrics'i getir
+        custom_metrics = conn.execute('''
+            SELECT metric_name, metric_value, unit FROM custom_metrics 
+            WHERE activity_id = ?
+            ORDER BY metric_name
+        ''', (activity['id'],)).fetchall()
+        
+        activity_dict['custom_metrics'] = [dict(metric) for metric in custom_metrics]
+        result.append(activity_dict)
+    
     conn.close()
-    return jsonify([dict(activity) for activity in activities])
+    return jsonify(result)
 
 @app.route('/api/activities/<int:activity_id>', methods=['PUT', 'DELETE'])
 @login_required
@@ -1310,6 +1404,102 @@ def get_analysis():
         'match': summary_match,
         'ratios': summary_ratios
     }})
+
+@app.route('/api/match-periods-analysis', methods=['POST'])
+@login_required
+def get_match_periods_analysis():
+    """
+    Analyze match performance by periods (1st half vs 2nd half).
+    """
+    user_id = session['user_id']
+    data = request.json or {}
+    player_ids = data.get('player_ids', [])
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    
+    if not player_ids or not start_date or not end_date:
+        return jsonify({'error': 'player_ids, start_date ve end_date gerekli'}), 400
+
+    conn = get_db_connection()
+    
+    # Security check
+    placeholders = ','.join(['?' for _ in player_ids])
+    player_check = conn.execute(f'''
+        SELECT COUNT(*) FROM players p 
+        JOIN teams t ON p.team_id = t.id 
+        WHERE p.id IN ({placeholders}) AND t.user_id = ?
+    ''', player_ids + [user_id]).fetchone()[0]
+    
+    if player_check != len(player_ids):
+        conn.close()
+        return jsonify({'error': 'Yetkisiz oyuncu erişimi'}), 403
+        
+    results = []
+    
+    for pid in player_ids:
+        # Get player name
+        player_row = conn.execute('SELECT first_name, last_name FROM players WHERE id = ?', (pid,)).fetchone()
+        if not player_row:
+            continue
+        player_name = f"{player_row['first_name']} {player_row['last_name']}"
+
+        # Get match periods data
+        periods_data = conn.execute('''
+            SELECT mp.period_type, 
+                   AVG(mp.duration_minutes) as avg_duration,
+                   AVG(mp.total_distance_m) as avg_distance,
+                   AVG(mp.high_speed_16kmh_m) as avg_high_speed_16,
+                   AVG(mp.high_speed_18kmh_m) as avg_high_speed_18,
+                   AVG(mp.high_speed_20kmh_m) as avg_high_speed_20,
+                   AVG(mp.sprint_24kmh_m) as avg_sprint_24,
+                   AVG(mp.acc_decc_count) as avg_acc_decc,
+                   AVG(mp.high_acc_decc_count) as avg_high_acc_decc,
+                   AVG(mp.high_metabolic_power_m) as avg_metabolic_power,
+                   AVG(mp.max_speed_kmh) as avg_max_speed,
+                   AVG(mp.sprint_count_16plus) as avg_sprint_16plus,
+                   AVG(mp.sprint_count_18plus) as avg_sprint_18plus,
+                   AVG(mp.sprint_count_20plus) as avg_sprint_20plus,
+                   AVG(mp.sprint_count_24plus) as avg_sprint_24plus
+            FROM match_periods mp
+            JOIN activities a ON mp.activity_id = a.id
+            WHERE a.player_id = ? AND a.activity_type = 'match'
+              AND a.date BETWEEN ? AND ?
+            GROUP BY mp.period_type
+        ''', (pid, start_date, end_date)).fetchall()
+        
+        # Organize data by period
+        first_half = {'distance': 0, 'max_speed': 0, 'sprint_count': 0}
+        second_half = {'distance': 0, 'max_speed': 0, 'sprint_count': 0}
+        
+        for period in periods_data:
+            period_data = {
+                'distance': round(period['avg_distance'] or 0, 0),
+                'max_speed': round(period['avg_max_speed'] or 0, 1),
+                'sprint_count': round(period['avg_sprint_count'] or 0, 0)
+            }
+            
+            if period['period_type'] == '1st_half':
+                first_half = period_data
+            elif period['period_type'] == '2nd_half':
+                second_half = period_data
+        
+        # Calculate totals and differences
+        total = {
+            'distance': first_half['distance'] + second_half['distance'],
+            'max_speed': max(first_half['max_speed'], second_half['max_speed']),
+            'sprint_count': first_half['sprint_count'] + second_half['sprint_count']
+        }
+        
+        results.append({
+            'player_id': pid,
+            'player_name': player_name,
+            'first_half': first_half,
+            'second_half': second_half,
+            'total': total
+        })
+    
+    conn.close()
+    return jsonify({'players': results})
 
 # Weight Measurements API
 @app.route('/api/players/<int:player_id>/weight-measurements', methods=['GET'])
